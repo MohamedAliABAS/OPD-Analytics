@@ -1,11 +1,7 @@
 import re, json, requests, pandas as pd
 import time, os
 import streamlit as st
-from datetime import datetime
 
-# ══════════════════════════════════════════════════════
-# PAGE CONFIG
-# ══════════════════════════════════════════════════════
 st.set_page_config(
     page_title="Andalusia OPD Analytics",
     page_icon="📊",
@@ -14,155 +10,12 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════════════
-# CUSTOM CSS
+# GLOBAL CSS  (layout only — no component classes)
 # ══════════════════════════════════════════════════════
 st.markdown("""
 <style>
-  #MainMenu, footer, header { visibility: hidden; }
-  .block-container { padding: 0 !important; max-width: 100% !important; }
-
-  .chat-wrapper {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 0 16px 120px 16px;
-    font-family: 'Segoe UI', sans-serif;
-  }
-
-  /* ── Header ── */
-  .chat-header {
-    position: sticky; top: 0; z-index: 100;
-    background: #185FA5; color: white;
-    padding: 14px 24px;
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 20px;
-    border-radius: 0 0 16px 16px;
-    box-shadow: 0 2px 12px rgba(24,95,165,0.3);
-  }
-  .chat-header h1 { margin:0; font-size:18px; font-weight:600; color:white; }
-  .chat-header p  { margin:0; font-size:12px; opacity:.8; }
-  .bu-badge {
-    background: rgba(255,255,255,0.2);
-    padding: 3px 10px; border-radius:20px; font-size:12px;
-  }
-
-  /* ── Bubbles ── */
-  .msg-user { display:flex; justify-content:flex-end; margin:10px 0; }
-  .msg-user .bubble {
-    background:#185FA5; color:white;
-    padding:10px 16px;
-    border-radius:18px 18px 4px 18px;
-    max-width:70%; font-size:15px; line-height:1.5;
-  }
-  .msg-bot { display:flex; gap:10px; margin:10px 0; align-items:flex-start; }
-  .bot-avatar {
-    width:32px; height:32px; border-radius:50%;
-    background:#E6F1FB;
-    display:flex; align-items:center; justify-content:center;
-    font-size:16px; flex-shrink:0; margin-top:4px;
-  }
-  .msg-bot .bubble {
-    background:#F5F7FA; border:1px solid #E8ECF0;
-    padding:14px 18px;
-    border-radius:4px 18px 18px 18px;
-    max-width:90%; font-size:14px; line-height:1.75;
-    color:#1a1a2e;
-  }
-
-  /* ── Context badge ── */
-  .ctx-badge {
-    display:inline-block;
-    background:#E6F1FB; color:#0C447C;
-    border-radius:20px; padding:3px 10px;
-    font-size:11px; font-weight:600;
-    margin-bottom:12px;
-  }
-
-  /* ── KPI grid ── */
-  .kpi-grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(140px,1fr));
-    gap:8px; margin-bottom:14px;
-  }
-  .kpi-card {
-    background:white; border:1px solid #E8ECF0;
-    border-radius:10px; padding:10px 12px;
-  }
-  .kpi-name { font-size:10px; color:#888; margin-bottom:6px; }
-  .bu-row   { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
-  .bu-tag   { font-size:10px; font-weight:700; width:28px; }
-  .bar-wrap { flex:1; height:5px; background:#E8ECF0; border-radius:3px; }
-  .bar-fill { height:100%; border-radius:3px; }
-  .bu-num   { font-size:11px; font-weight:600; min-width:38px; text-align:right; }
-
-  /* ── Ranking ── */
-  .rank-section { margin-bottom:10px; }
-  .rank-row {
-    display:flex; align-items:center; gap:8px;
-    padding:5px 0; border-bottom:1px solid #F0F2F5;
-    font-size:12px;
-  }
-  .rank-num  { color:#aaa; font-size:10px; width:18px; }
-  .rank-name { flex:1; color:#1a1a2e; }
-  .rank-pct  { font-weight:600; min-width:38px; text-align:right; }
-
-  /* ── Sparkline ── */
-  .spark-wrap {
-    display:flex; align-items:flex-end; gap:3px;
-    height:32px; margin:8px 0 2px;
-  }
-  .spark-bar { flex:1; border-radius:2px 2px 0 0; }
-  .spark-labels {
-    display:flex; justify-content:space-between;
-    font-size:9px; color:#aaa; margin-bottom:8px;
-  }
-
-  /* ── Winner summary ── */
-  .winner-row {
-    display:flex; align-items:center; gap:8px;
-    padding:6px 10px; background:white;
-    border:1px solid #E8ECF0; border-radius:8px;
-    margin-bottom:5px; font-size:12px;
-  }
-  .winner-bu   { font-weight:700; min-width:32px; }
-  .winner-desc { color:#666; flex:1; }
-  .winner-val  { font-weight:600; }
-
-  /* ── Analysis block ── */
-  .analysis-block {
-    background:white;
-    border-left:3px solid #185FA5;
-    border-radius:0 8px 8px 0;
-    padding:12px 14px; margin-top:12px;
-    line-height:1.8; font-size:13px; color:#1a1a2e;
-  }
-  .analysis-block p { margin:0 0 8px; }
-  .analysis-block p:last-child { margin:0; }
-
-  /* ── Tags inside analysis ── */
-  .tag-green { background:#E1F5EE; color:#085041; border-radius:4px; padding:1px 6px; font-size:11px; font-weight:600; }
-  .tag-red   { background:#FCEBEB; color:#791F1F; border-radius:4px; padding:1px 6px; font-size:11px; font-weight:600; }
-  .tag-amber { background:#FAEEDA; color:#633806; border-radius:4px; padding:1px 6px; font-size:11px; font-weight:600; }
-
-  /* ── Section title ── */
-  .section-title {
-    font-size:10px; font-weight:700; color:#888;
-    text-transform:uppercase; letter-spacing:.06em;
-    margin:12px 0 6px;
-  }
-
-  /* ── Suggest chips ── */
-  .suggest-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
-  .chip {
-    border:1px solid #dde2ea; border-radius:20px;
-    padding:5px 12px; font-size:11px; color:#555;
-    cursor:pointer; background:white;
-    text-decoration:none; display:inline-block;
-  }
-
-  /* ── Welcome ── */
-  .welcome-box { text-align:center; padding:40px 20px 20px; color:#555; }
-  .welcome-box h2 { color:#185FA5; font-size:22px; margin-bottom:8px; }
-  .welcome-box p  { font-size:15px; color:#888; margin-bottom:24px; }
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding: 0 !important; max-width: 100% !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -172,8 +25,488 @@ st.markdown("""
 GITHUB_TOKEN    = os.environ.get("GITHUB_TOKEN", "ضع_token_هنا")
 GITHUB_BASE_URL = "https://models.inference.ai.azure.com"
 GITHUB_MODEL    = "gpt-4o"
+BU_COLORS       = {"ASH": "#185FA5", "SMH": "#0F6E56", "HJH": "#BA7517"}
 
-BU_COLORS = {"ASH": "#185FA5", "SMH": "#0F6E56", "HJH": "#BA7517"}
+# ══════════════════════════════════════════════════════
+# INLINE STYLE HELPERS
+# ══════════════════════════════════════════════════════
+S = {
+    "wrap":        "max-width:860px;margin:0 auto;padding:0 16px 120px;font-family:'Segoe UI',sans-serif;",
+    "user_row":    "display:flex;justify-content:flex-end;margin:10px 0;",
+    "user_bub":    "background:#185FA5;color:white;padding:10px 16px;border-radius:18px 18px 4px 18px;max-width:70%;font-size:14px;line-height:1.5;",
+    "bot_row":     "display:flex;gap:10px;margin:10px 0;align-items:flex-start;",
+    "bot_avatar":  "width:32px;height:32px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:4px;",
+    "bot_bub":     "background:#F5F7FA;border:1px solid #E8ECF0;padding:14px 18px;border-radius:4px 18px 18px 18px;flex:1;font-size:14px;line-height:1.75;color:#1a1a2e;",
+    "ctx_badge":   "display:inline-block;background:#E6F1FB;color:#0C447C;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;margin-bottom:12px;",
+    "kpi_grid":    "display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px;",
+    "kpi_card":    "background:white;border:1px solid #E8ECF0;border-radius:10px;padding:10px 12px;",
+    "kpi_name":    "font-size:10px;color:#888;margin-bottom:6px;",
+    "bu_row":      "display:flex;align-items:center;gap:6px;margin-bottom:3px;",
+    "bar_wrap":    "flex:1;height:5px;background:#E8ECF0;border-radius:3px;",
+    "sec_title":   "font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px;",
+    "rank_row":    "display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F0F2F5;font-size:12px;",
+    "winner_row":  "display:flex;align-items:center;gap:8px;padding:6px 10px;background:white;border:1px solid #E8ECF0;border-radius:8px;margin-bottom:5px;font-size:12px;",
+    "analysis":    "background:white;border-left:3px solid #185FA5;border-radius:0 8px 8px 0;padding:12px 14px;margin-top:12px;line-height:1.8;font-size:13px;color:#1a1a2e;",
+    "chip_row":    "display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;",
+    "chip":        "display:inline-block;border:1px solid #dde2ea;border-radius:20px;padding:5px 12px;font-size:11px;color:#555;background:white;text-decoration:none;",
+    "spark_wrap":  "display:flex;align-items:flex-end;gap:3px;height:36px;margin:8px 0 2px;",
+    "spark_labels":"display:flex;justify-content:space-between;font-size:9px;color:#aaa;margin-bottom:8px;",
+    "divider":     "border:none;border-top:1px solid #F0F2F5;margin:12px 0;",
+}
+
+def tag(el, style_key, content, extra=""):
+    return f"<{el} style='{S[style_key]}{extra}'>{content}</{el}>"
+
+def bot_bubble(inner_html):
+    avatar = f"<div style='{S['bot_avatar']}'>🤖</div>"
+    bubble = f"<div style='{S['bot_bub']}'>{inner_html}</div>"
+    return f"<div style='{S['bot_row']}'>{avatar}{bubble}</div>"
+
+def ctx_badge(label):
+    return f"<div style='{S['ctx_badge']}'>{label}</div>"
+
+def sec_title(t):
+    return f"<div style='{S['sec_title']}'>{t}</div>"
+
+def divider():
+    return f"<hr style='{S['divider']}'>"
+
+def analysis_block(paragraphs):
+    if not paragraphs:
+        return ""
+    ps = "".join(f"<p style='margin:0 0 8px;'>{p}</p>" for p in paragraphs)
+    return f"<div style='{S['analysis']}'>{ps}</div>"
+
+def suggest_chips(chips):
+    items = "".join(
+        f"<a style='{S['chip']}' href='?q={c[\"prompt\"]}'>{c['label']} ↗</a>"
+        for c in chips
+    )
+    return f"<div style='{S['chip_row']}'>{items}</div>"
+
+def kpi_card_simple(label, value, color="#185FA5"):
+    return (
+        f"<div style='{S['kpi_card']}'>"
+        f"<div style='{S['kpi_name']}'>{label}</div>"
+        f"<div style='font-size:16px;font-weight:700;color:{color};'>{value}</div>"
+        f"</div>"
+    )
+
+def kpi_card_bu(label, bu_values):
+    """bu_values = [{"bu":"ASH","val":94,"display":"94%","color":"#185FA5"}, ...]"""
+    rows = ""
+    max_v = max((b["val"] for b in bu_values), default=1) or 1
+    for b in bu_values:
+        pct = int(b["val"] / max_v * 100)
+        rows += (
+            f"<div style='{S['bu_row']}'>"
+            f"<span style='font-size:10px;font-weight:700;width:28px;color:{b['color']};'>{b['bu']}</span>"
+            f"<div style='{S['bar_wrap']}'>"
+            f"<div style='height:100%;border-radius:3px;width:{pct}%;background:{b['color']};'></div>"
+            f"</div>"
+            f"<span style='font-size:11px;font-weight:600;min-width:38px;text-align:right;color:{b['color']};'>{b['display']}</span>"
+            f"</div>"
+        )
+    return (
+        f"<div style='{S['kpi_card']}'>"
+        f"<div style='{S['kpi_name']}'>{label}</div>"
+        f"{rows}"
+        f"</div>"
+    )
+
+def rank_rows(doctors):
+    """doctors=[{"rank":1,"name":"Dr. X","pct":94.2,"color":"#0F6E56"}]"""
+    rows = ""
+    max_p = doctors[0]["pct"] if doctors else 1
+    for d in doctors:
+        bar_w = int(d["pct"] / max_p * 100) if max_p else 0
+        rows += (
+            f"<div style='{S['rank_row']}'>"
+            f"<span style='color:#aaa;font-size:10px;width:18px;'>#{d['rank']}</span>"
+            f"<span style='flex:1;color:#1a1a2e;'>{d['name']}</span>"
+            f"<div style='{S['bar_wrap']}max-width:120px;'>"
+            f"<div style='height:100%;border-radius:3px;width:{bar_w}%;background:{d['color']};'></div>"
+            f"</div>"
+            f"<span style='font-weight:700;min-width:42px;text-align:right;color:{d['color']};'>{d['pct']:.1f}%</span>"
+            f"</div>"
+        )
+    return rows
+
+def winner_rows(winners):
+    rows = ""
+    for w in winners:
+        color = BU_COLORS.get(w["bu"], "#888")
+        rows += (
+            f"<div style='{S['winner_row']}'>"
+            f"<span style='font-size:14px;color:{color};'>★</span>"
+            f"<span style='font-weight:700;min-width:32px;color:{color};'>{w['bu']}</span>"
+            f"<span style='color:#666;flex:1;'>{w['desc']}</span>"
+            f"<span style='font-weight:600;color:{color};'>{w['kpis']} KPIs</span>"
+            f"</div>"
+        )
+    return rows
+
+def sparkline(values, labels=None):
+    if not values:
+        return ""
+    mx = max(values) or 1
+    bars = ""
+    for v in values:
+        h   = max(8, int(v / mx * 36))
+        col = "#185FA5" if v == mx else "#B5D4F4"
+        bars += f"<div style='flex:1;height:{h}px;background:{col};border-radius:2px 2px 0 0;'></div>"
+    lbl_html = ""
+    if labels:
+        step     = max(1, len(labels)//4)
+        selected = [labels[i] for i in range(0, len(labels), step)]
+        lbl_html = (
+            f"<div style='{S['spark_labels']}'>"
+            + "".join(f"<span>{l}</span>" for l in selected)
+            + "</div>"
+        )
+    return f"<div style='{S['spark_wrap']}'>{bars}</div>{lbl_html}"
+
+# ══════════════════════════════════════════════════════
+# RESPONSE TYPE DETECTION
+# ══════════════════════════════════════════════════════
+VISUAL_KW = ["rank","top","bottom","best","worst","compare","comparison",
+             "summary","trend","monthly","yearly","year summary","vs",
+             "performance","achievement","revenue","cases","kpi","dashboard",
+             "all doctors","all bus","leakage","no-show","pms","retention"]
+TEXT_KW   = ["why","what does","what is","how","explain","definition",
+             "ليه","يعني","كيف","ما هو","ما معنى"]
+
+def detect_type(query):
+    q  = query.lower()
+    ts = sum(1 for k in TEXT_KW   if k in q)
+    vs = sum(1 for k in VISUAL_KW if k in q)
+    return "TEXT" if ts > vs else ("VISUAL" if vs > 0 else "TEXT")
+
+# ══════════════════════════════════════════════════════
+# NUMBER HELPERS
+# ══════════════════════════════════════════════════════
+def parse_num(s):
+    try:    return float(str(s).replace(",","").replace("%","").strip())
+    except: return 0.0
+
+def pct_color(v, lower_better=False):
+    if lower_better:
+        return "#0F6E56" if v < 10 else ("#BA7517" if v < 20 else "#A32D2D")
+    return "#0F6E56" if v >= 90 else ("#BA7517" if v >= 75 else "#A32D2D")
+
+def fmt_big(v):
+    if v >= 1_000_000: return f"{v/1_000_000:.2f}M"
+    if v >= 1_000:     return f"{v/1_000:.0f}K"
+    return f"{v:.0f}"
+
+# ══════════════════════════════════════════════════════
+# FORMAT RESPONSE  → HTML string
+# ══════════════════════════════════════════════════════
+def format_response(raw, query):
+    if detect_type(query) == "TEXT":
+        clean = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', raw.strip())
+        clean = clean.replace("\n", "<br>")
+        return bot_bubble(clean)
+
+    q = query.lower()
+    if any(k in q for k in ["compare","vs"," ash"," smh"," hjh","all bus","business unit"]):
+        return _render_compare(raw, query)
+    if any(k in q for k in ["rank","top","best","worst","bottom"]):
+        return _render_ranking(raw, query)
+    if any(k in q for k in ["trend","monthly","month"]):
+        return _render_trend(raw, query)
+    if any(k in q for k in ["year summary","summary","overview"]):
+        return _render_year_summary(raw, query)
+    if any(k in q for k in ["doctor","dr.","dr ","performance"]):
+        return _render_doctor(raw, query)
+    return _render_plain(raw)
+
+def _render_plain(raw):
+    clean = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', raw.strip())
+    clean = clean.replace("\n","<br>")
+    return bot_bubble(clean)
+
+# ── COMPARE ──────────────────────────────────────────
+def _render_compare(raw, query):
+    KPIs = [
+        ("Revenue achievement", r'(?:revenue|rev).{0,40}?([\d.]+)%', False),
+        ("No-show %",           r'no.?show.{0,25}?([\d.]+)%',        True),
+        ("Cross referral %",    r'cross.{0,25}?([\d.]+)%',           False),
+        ("Patient retention %", r'retention.{0,25}?([\d.]+)%',       False),
+        ("Service leakage %",   r'leakage.{0,25}?([\d.]+)%',         True),
+        ("Doctor PMS %",        r'pms.{0,25}?([\d.]+)%',             False),
+    ]
+
+    # split raw into per-BU sections
+    bu_sections = {}
+    for bu in ["ASH","SMH","HJH"]:
+        m = re.search(rf'\b{bu}\b.*?(?=\bASH\b|\bSMH\b|\bHJH\b|RANKING|ALL DOCTORS|$)',
+                      raw, re.DOTALL|re.IGNORECASE)
+        if m: bu_sections[bu] = m.group(0)
+
+    cards_html = ""
+    win_counts = {bu: 0 for bu in ["ASH","SMH","HJH"]}
+
+    for kpi_name, pat, lower_better in KPIs:
+        bu_data = []
+        for bu in ["ASH","SMH","HJH"]:
+            section = bu_sections.get(bu, raw)
+            m       = re.search(pat, section, re.IGNORECASE)
+            if m:
+                v = parse_num(m.group(1))
+                bu_data.append({"bu": bu, "val": v,
+                                 "display": f"{v:.1f}%",
+                                 "color": BU_COLORS[bu]})
+        if len(bu_data) >= 2:
+            # find winner
+            winner = min(bu_data, key=lambda x: x["val"]) if lower_better \
+                     else max(bu_data, key=lambda x: x["val"])
+            win_counts[winner["bu"]] += 1
+            cards_html += kpi_card_bu(kpi_name, bu_data)
+
+    grid_html = f"<div style='{S['kpi_grid']}'>{cards_html}</div>" if cards_html else ""
+
+    # winners summary
+    winner_data = [
+        {"bu": bu, "desc": "leads in performance", "kpis": cnt}
+        for bu, cnt in win_counts.items() if cnt > 0
+    ]
+    winner_data.sort(key=lambda x: -x["kpis"])
+    winners_html = ""
+    if winner_data:
+        winners_html = sec_title("Winner per KPI") + winner_rows(winner_data)
+
+    # analysis lines from LLM
+    skip_pat = re.compile(r'(={3,}|RANKING|BU COMPARISON|Target|Actual|#\d+)', re.IGNORECASE)
+    a_lines  = [l.strip() for l in raw.split("\n")
+                if len(l.strip()) > 35 and not skip_pat.search(l)]
+    a_lines  = _tag_pcts(a_lines[:5])
+
+    label = "comparison · " + re.sub(r'compare|in\s*\d{4}','',query,flags=re.IGNORECASE).strip()[:40]
+
+    chips = [
+        {"label":"ASH doctors", "prompt":"Show ASH doctors performance"},
+        {"label":"SMH no-show", "prompt":"Why is SMH no-show % high?"},
+        {"label":"HJH revenue", "prompt":"How to improve HJH revenue achievement?"},
+    ]
+
+    inner = (ctx_badge(label) + grid_html + winners_html
+             + analysis_block(a_lines) + suggest_chips(chips))
+    return bot_bubble(inner)
+
+# ── RANKING ───────────────────────────────────────────
+def _render_ranking(raw, query):
+    doctors = []
+    for line in raw.split("\n"):
+        m = re.search(r'#\s*(\d+)\s+Dr\.?\s*([\w\s]+?)\s+([\d,.]+)', line)
+        if m:
+            rank = int(m.group(1))
+            name = m.group(2).strip()
+            val  = parse_num(m.group(3))
+            doctors.append({"rank": rank, "name": f"Dr. {name}", "raw": val})
+
+    rows_html = ""
+    if doctors:
+        max_v = max(d["raw"] for d in doctors) or 1
+        for d in doctors:
+            d["pct"]   = d["raw"] / max_v * 100
+            d["color"] = pct_color(d["pct"])
+        rows_html = rank_rows(doctors[:10])
+    else:
+        rows_html = f"<pre style='font-size:11px;overflow:auto'>{raw[:500]}</pre>"
+
+    metric_m = re.search(r'RANKING:\s*(.+?)[\|\n]', raw)
+    metric   = metric_m.group(1).strip() if metric_m else "metric"
+
+    skip_pat = re.compile(r'(={3,}|#\d+|RANKING)', re.IGNORECASE)
+    a_lines  = [l.strip() for l in raw.split("\n")
+                if len(l.strip()) > 35 and not skip_pat.search(l)]
+    a_lines  = _tag_pcts(a_lines[:3])
+
+    chips = [
+        {"label": "Doctor details",  "prompt": f"Show performance of {doctors[0]['name']}" if doctors else "Show doctor performance"},
+        {"label": "Compare by BU",   "prompt": "Compare all BUs"},
+    ]
+
+    inner = (ctx_badge(metric + " · ranking")
+             + rows_html + analysis_block(a_lines) + suggest_chips(chips))
+    return bot_bubble(inner)
+
+# ── TREND ─────────────────────────────────────────────
+def _render_trend(raw, query):
+    MONTH_MAP = {"Jan":1,"Feb":2,"Mar":3,"Apr":4,"May":5,"Jun":6,
+                 "Jul":7,"Aug":8,"Sep":9,"Oct":10,"Nov":11,"Dec":12}
+    monthly = {}
+    for abbr, num in MONTH_MAP.items():
+        m = re.search(rf'{abbr}\s+([\d,]+\.?\d*)', raw)
+        if m: monthly[num] = parse_num(m.group(1))
+
+    sorted_m = sorted(monthly.keys())
+    values   = [monthly[k] for k in sorted_m]
+    labels   = [list(MONTH_MAP.keys())[k-1] for k in sorted_m]
+
+    spark_html = sparkline(values, labels)
+
+    kpi_html = ""
+    if values:
+        avg   = sum(values)/len(values)
+        best  = max(values); bi = values.index(best); bm = labels[bi] if bi < len(labels) else ""
+        worst = min(values); wi = values.index(worst); wm = labels[wi] if wi < len(labels) else ""
+        kpi_html = (
+            f"<div style='{S['kpi_grid']}grid-template-columns:repeat(4,1fr);'>"
+            + kpi_card_simple("Best month",     f"{bm} · {fmt_big(best)}",  "#185FA5")
+            + kpi_card_simple("Worst month",    f"{wm} · {fmt_big(worst)}", "#A32D2D")
+            + kpi_card_simple("Monthly avg",    fmt_big(avg))
+            + kpi_card_simple("Months tracked", str(len(values)))
+            + "</div>"
+        )
+
+    metric_m = re.search(r'MONTHLY TREND:\s*(.+?)[\|\n]', raw)
+    metric   = metric_m.group(1).strip() if metric_m else "metric"
+
+    skip_pat = re.compile(r'(={3,}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Avg|Best|Low)', re.IGNORECASE)
+    a_lines  = [l.strip() for l in raw.split("\n")
+                if len(l.strip()) > 35 and not skip_pat.search(l)]
+    a_lines  = _tag_pcts(a_lines[:3])
+
+    chips = [
+        {"label": "vs target",       "prompt": f"Compare {metric} actual vs target"},
+        {"label": "Doctor breakdown", "prompt": "Which doctor drove the best month?"},
+    ]
+
+    inner = (ctx_badge(metric + " · monthly trend")
+             + kpi_html + sec_title("Monthly breakdown") + spark_html
+             + analysis_block(a_lines) + suggest_chips(chips))
+    return bot_bubble(inner)
+
+# ── YEAR SUMMARY ──────────────────────────────────────
+def _render_year_summary(raw, query):
+    def epct(pat):
+        m = re.search(pat, raw, re.IGNORECASE)
+        return parse_num(m.group(1)) if m else None
+
+    metrics = [
+        ("Revenue achievement", epct(r'revenue.*?achievement.*?([\d.]+)%'), False),
+        ("Cases achievement",   epct(r'cases.*?achievement.*?([\d.]+)%'),   False),
+        ("No-show %",           epct(r'no.?show.*?([\d.]+)%'),              True),
+        ("Service leakage %",   epct(r'leakage.*?([\d.]+)%'),               True),
+        ("Doctor PMS %",        epct(r'pms.*?([\d.]+)%'),                   False),
+        ("Patient retention %", epct(r'retention.*?([\d.]+)%'),             False),
+    ]
+
+    cards = "".join(
+        kpi_card_simple(lbl, f"{val:.1f}%", pct_color(val, lb))
+        for lbl, val, lb in metrics if val is not None
+    )
+    kpi_html = f"<div style='{S['kpi_grid']}'>{cards}</div>" if cards else ""
+
+    top_m    = re.search(r'[Tt]op\s*:?\s*Dr\.?\s*([\w\s]+?)\s*\(([\d.]+)%\)', raw)
+    bot_m    = re.search(r'[Bb]ottom\s*:?\s*Dr\.?\s*([\w\s]+?)\s*\(([\d.]+)%\)', raw)
+    doc_html = ""
+    if top_m or bot_m:
+        doc_html = sec_title("Doctor highlights")
+        if top_m:
+            doc_html += (
+                f"<div style='{S['winner_row']}'>"
+                f"<span style='color:#0F6E56;font-size:16px;'>↑</span>"
+                f"<span style='font-weight:700;min-width:36px;color:#0F6E56;'>Top</span>"
+                f"<span style='color:#666;flex:1;'>Dr. {top_m.group(1).strip()}</span>"
+                f"<span style='font-weight:700;color:#0F6E56;'>{top_m.group(2)}%</span>"
+                f"</div>"
+            )
+        if bot_m:
+            doc_html += (
+                f"<div style='{S['winner_row']}'>"
+                f"<span style='color:#A32D2D;font-size:16px;'>↓</span>"
+                f"<span style='font-weight:700;min-width:36px;color:#A32D2D;'>Low</span>"
+                f"<span style='color:#666;flex:1;'>Dr. {bot_m.group(1).strip()}</span>"
+                f"<span style='font-weight:700;color:#A32D2D;'>{bot_m.group(2)}%</span>"
+                f"</div>"
+            )
+
+    skip_pat = re.compile(r'(={3,}|Target|Actual|Achievement|YEAR SUMMARY|REVENUE|CASES|AVERAGE|DOCTORS|RANKING)', re.IGNORECASE)
+    a_lines  = [l.strip() for l in raw.split("\n")
+                if len(l.strip()) > 35 and not skip_pat.search(l)]
+    a_lines  = _tag_pcts(a_lines[:4])
+
+    year_m = re.search(r'YEAR SUMMARY:\s*(\d{4})', raw)
+    year   = year_m.group(1) if year_m else "year"
+
+    chips = [
+        {"label": "Monthly breakdown", "prompt": f"Monthly revenue trend {year}"},
+        {"label": "Doctor rankings",   "prompt": f"Rank all doctors by revenue {year}"},
+        {"label": "Compare BUs",       "prompt": f"Compare ASH vs SMH vs HJH in {year}"},
+    ]
+
+    inner = (ctx_badge(f"year summary · {year}")
+             + kpi_html + doc_html + analysis_block(a_lines) + suggest_chips(chips))
+    return bot_bubble(inner)
+
+# ── DOCTOR ────────────────────────────────────────────
+def _render_doctor(raw, query):
+    def epct(pat):
+        m = re.search(pat, raw, re.IGNORECASE)
+        return parse_num(m.group(1)) if m else None
+
+    metrics = [
+        ("Revenue achievement", epct(r'[Aa]chievement\s*:\s*([\d.]+)%'),       False),
+        ("Cases achievement",   epct(r'[Cc]ases.*?[Aa]chievement\s*:\s*([\d.]+)%'), False),
+        ("Doctor PMS %",        epct(r'PMS.*?([\d.]+)%'),                       False),
+        ("No-show %",           epct(r'[Nn]o.?[Ss]how.*?([\d.]+)%'),           True),
+        ("Service leakage %",   epct(r'[Ll]eakage\s*%?\s*:\s*([\d.]+)%'),      True),
+        ("Patient retention %", epct(r'[Rr]etention.*?([\d.]+)%'),              False),
+    ]
+
+    cards = "".join(
+        kpi_card_simple(lbl, f"{val:.1f}%", pct_color(val, lb))
+        for lbl, val, lb in metrics if val is not None
+    )
+    kpi_html = f"<div style='{S['kpi_grid']}'>{cards}</div>" if cards else ""
+
+    rank_m   = re.search(r'OVERALL RANKING:\s*#?(\d+)\s*of\s*(\d+)', raw)
+    rank_html = ""
+    if rank_m:
+        r, total = int(rank_m.group(1)), int(rank_m.group(2))
+        rc       = pct_color((total - r) / total * 100)
+        rank_html = (
+            sec_title("Overall ranking")
+            + f"<div style='{S['winner_row']}'>"
+            f"<span style='font-size:22px;font-weight:700;color:{rc};'>#{r}</span>"
+            f"<span style='color:#666;flex:1;'>out of {total} doctors</span>"
+            f"</div>"
+        )
+
+    doc_m    = re.search(r'DOCTOR REPORT:\s*Dr\.?\s*([\w\s]+?)\s*\|', raw)
+    doc_name = f"Dr. {doc_m.group(1).strip()}" if doc_m else "Doctor"
+
+    skip_pat = re.compile(r'(={3,}|Target|Actual|Achievement|DOCTOR REPORT|REVENUE|CASES|QUALITY|OTHER|OVERALL|#\d+)', re.IGNORECASE)
+    a_lines  = [l.strip() for l in raw.split("\n")
+                if len(l.strip()) > 35 and not skip_pat.search(l)]
+    a_lines  = _tag_pcts(a_lines[:4])
+
+    chips = [
+        {"label": "Monthly trend",       "prompt": f"Monthly revenue trend for {doc_name}"},
+        {"label": "Compare with peers",  "prompt": "Compare all doctors by revenue"},
+        {"label": "Root cause analysis", "prompt": f"Why is no-show % high for {doc_name}?"},
+    ]
+
+    inner = (ctx_badge(doc_name + " · performance")
+             + kpi_html + rank_html + analysis_block(a_lines) + suggest_chips(chips))
+    return bot_bubble(inner)
+
+# ── TAG PERCENTAGES in analysis lines ────────────────
+def _tag_pcts(lines):
+    result = []
+    for line in lines:
+        def color_pct(m):
+            v = float(m.group(1))
+            if v >= 80:   return f"<span style='background:#E1F5EE;color:#085041;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:600;'>{m.group(0)}</span>"
+            if v >= 50:   return f"<span style='background:#FAEEDA;color:#633806;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:600;'>{m.group(0)}</span>"
+            return         f"<span style='background:#FCEBEB;color:#791F1F;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:600;'>{m.group(0)}</span>"
+        line = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', line)
+        line = re.sub(r'(\d+\.?\d*)%', color_pct, line)
+        result.append(line)
+    return result
 
 # ══════════════════════════════════════════════════════
 # LOAD DATA
@@ -209,578 +542,7 @@ def load_data():
 DATA = load_data()
 
 # ══════════════════════════════════════════════════════
-# RESPONSE TYPE DETECTION
-# ══════════════════════════════════════════════════════
-VISUAL_KEYWORDS = [
-    "rank", "top", "bottom", "best", "worst", "compare", "comparison",
-    "summary", "trend", "monthly", "yearly", "year summary", "vs",
-    "performance", "achievement", "revenue", "cases", "kpi", "dashboard",
-    "all doctors", "all bus", "leakage", "no-show", "pms", "retention"
-]
-TEXT_KEYWORDS = [
-    "why", "what does", "what is", "how", "explain", "definition",
-    "ليه", "يعني", "كيف", "ما هو", "ما معنى"
-]
-
-def detect_response_type(query: str) -> str:
-    q = query.lower()
-    text_score   = sum(1 for k in TEXT_KEYWORDS   if k in q)
-    visual_score = sum(1 for k in VISUAL_KEYWORDS if k in q)
-    if text_score > visual_score:
-        return "TEXT"
-    if visual_score > 0:
-        return "VISUAL"
-    return "TEXT"
-
-
-# ══════════════════════════════════════════════════════
-# HTML RENDERERS
-# ══════════════════════════════════════════════════════
-
-def make_context_badge(label: str) -> str:
-    return f'<div class="ctx-badge">{label}</div>'
-
-
-def make_kpi_card(title: str, bu_values: dict, is_lower_better: bool = False) -> str:
-    """bu_values = {"ASH": (value, max_value, display_str), ...}"""
-    rows = ""
-    for bu, (val, max_val, display) in bu_values.items():
-        color  = BU_COLORS.get(bu, "#888")
-        pct    = int(val / max_val * 100) if max_val else 0
-        rows += f"""
-        <div class="bu-row">
-          <span class="bu-tag" style="color:{color}">{bu}</span>
-          <div class="bar-wrap"><div class="bar-fill" style="width:{pct}%;background:{color}"></div></div>
-          <span class="bu-num" style="color:{color}">{display}</span>
-        </div>"""
-    return f"""
-    <div class="kpi-card">
-      <div class="kpi-name">{title}</div>
-      {rows}
-    </div>"""
-
-
-def make_rank_rows(doctors: list) -> str:
-    """doctors = [{"rank":1,"name":"Ahmed","pct":94.2,"color":"#0F6E56"}, ...]"""
-    rows = ""
-    for d in doctors:
-        color   = d.get("color", "#185FA5")
-        max_pct = doctors[0]["pct"] if doctors else 100
-        bar_w   = int(d["pct"] / max_pct * 100) if max_pct else 0
-        rows += f"""
-        <div class="rank-row">
-          <span class="rank-num">#{d['rank']}</span>
-          <span class="rank-name">{d['name']}</span>
-          <div class="bar-wrap" style="max-width:120px">
-            <div class="bar-fill" style="width:{bar_w}%;background:{color}"></div>
-          </div>
-          <span class="rank-pct" style="color:{color}">{d['pct']:.1f}%</span>
-        </div>"""
-    return f'<div class="rank-section">{rows}</div>'
-
-
-def make_sparkline(monthly_values: list, labels: list = None) -> str:
-    if not monthly_values:
-        return ""
-    mx = max(monthly_values) or 1
-    bars = ""
-    for v in monthly_values:
-        h   = max(10, int(v / mx * 32))
-        col = "#185FA5" if v == mx else "#B5D4F4"
-        bars += f'<div class="spark-bar" style="height:{h}px;background:{col}"></div>'
-
-    lbl_html = ""
-    if labels:
-        step     = max(1, len(labels)//4)
-        selected = [labels[i] for i in range(0, len(labels), step)]
-        lbl_html = (
-            '<div class="spark-labels">'
-            + "".join(f"<span>{l}</span>" for l in selected)
-            + "</div>"
-        )
-    return f'<div class="spark-wrap">{bars}</div>{lbl_html}'
-
-
-def make_winner_rows(winners: list) -> str:
-    """winners = [{"bu":"ASH","desc":"Revenue, Retention","kpis":3}, ...]"""
-    rows = ""
-    for w in winners:
-        color = BU_COLORS.get(w["bu"], "#888")
-        rows += f"""
-        <div class="winner-row">
-          <span style="font-size:14px;color:{color}">★</span>
-          <span class="winner-bu" style="color:{color}">{w['bu']}</span>
-          <span class="winner-desc">{w['desc']}</span>
-          <span class="winner-val" style="color:{color}">{w['kpis']} KPIs</span>
-        </div>"""
-    return rows
-
-
-def make_analysis_block(paragraphs: list) -> str:
-    content = "".join(f"<p>{p}</p>" for p in paragraphs)
-    return f'<div class="analysis-block">{content}</div>'
-
-
-def make_suggest_chips(chips: list) -> str:
-    """chips = [{"label":"...", "prompt":"..."}, ...]"""
-    items = "".join(
-        f'<a class="chip" href="?q={c["prompt"]}">{c["label"]} ↗</a>'
-        for c in chips
-    )
-    return f'<div class="suggest-row">{items}</div>'
-
-
-# ══════════════════════════════════════════════════════
-# SMART FORMAT — parses LLM raw text → HTML
-# ══════════════════════════════════════════════════════
-
-def _parse_number(s: str) -> float:
-    s = s.replace(",", "").replace("%", "").strip()
-    try:    return float(s)
-    except: return 0.0
-
-
-def _pct_color(pct: float, lower_better: bool = False) -> str:
-    if lower_better:
-        return "#0F6E56" if pct < 10 else ("#BA7517" if pct < 20 else "#A32D2D")
-    return "#0F6E56" if pct >= 90 else ("#BA7517" if pct >= 75 else "#A32D2D")
-
-
-def format_response(raw: str, query: str, tool_results: dict = None) -> str:
-    """
-    Decides whether to render a visual dashboard or plain chat bubble.
-    tool_results: dict of tool_name -> raw result string (optional, for richer rendering)
-    """
-    resp_type = detect_response_type(query)
-
-    # ── TEXT response ─────────────────────────────────
-    if resp_type == "TEXT":
-        clean = raw.strip()
-        # light markdown: bold → <b>, newlines → <br>
-        clean = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', clean)
-        clean = clean.replace("\n", "<br>")
-        return f'<div class="msg-bot"><div class="bot-avatar">🤖</div><div class="bubble">{clean}</div></div>'
-
-    # ── VISUAL response ───────────────────────────────
-    q_lower = query.lower()
-
-    # ── COMPARE / BU comparison ───────────────────────
-    if any(k in q_lower for k in ["compare", "vs", "comparison", "all bus", "ash", "smh", "hjh"]):
-        return _render_compare_dashboard(raw, query)
-
-    # ── RANKING / top / bottom ────────────────────────
-    if any(k in q_lower for k in ["rank", "top", "best", "worst", "bottom"]):
-        return _render_ranking(raw, query)
-
-    # ── TREND / monthly ───────────────────────────────
-    if any(k in q_lower for k in ["trend", "monthly", "month"]):
-        return _render_trend(raw, query)
-
-    # ── YEAR SUMMARY ──────────────────────────────────
-    if any(k in q_lower for k in ["year summary", "summary", "overview"]):
-        return _render_year_summary(raw, query)
-
-    # ── DOCTOR PERFORMANCE ────────────────────────────
-    if any(k in q_lower for k in ["doctor", "dr.", "performance", "dr "]):
-        return _render_doctor(raw, query)
-
-    # fallback: plain bubble
-    return _plain_bubble(raw)
-
-
-# ══════════════════════════════════════════════════════
-# VISUAL RENDERERS
-# ══════════════════════════════════════════════════════
-
-def _plain_bubble(text: str) -> str:
-    clean = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text.strip())
-    clean = clean.replace("\n", "<br>")
-    return f'<div class="msg-bot"><div class="bot-avatar">🤖</div><div class="bubble">{clean}</div></div>'
-
-
-def _render_compare_dashboard(raw: str, query: str) -> str:
-    """Parses BU comparison text → multi-KPI dashboard + analysis."""
-
-    # ── extract KPI values per BU from raw text ──────
-    kpi_patterns = {
-        "Revenue achievement": (r'(?:revenue|rev).{0,30}?(\d[\d,.]+)%', False),
-        "No-show %":           (r'no.?show.{0,20}?(\d[\d,.]+)%', True),
-        "Cross referral %":    (r'cross.{0,20}?(\d[\d,.]+)%', False),
-        "Patient retention %": (r'retention.{0,20}?(\d[\d,.]+)%', False),
-        "Service leakage %":   (r'leakage.{0,20}?(\d[\d,.]+)%', True),
-        "Doctor PMS %":        (r'pms.{0,20}?(\d[\d,.]+)%', False),
-    }
-
-    # split raw by BU sections
-    bu_sections = {}
-    for bu in ["ASH", "SMH", "HJH"]:
-        pattern = rf'{bu}.*?(?=ASH|SMH|HJH|RANKING|ALL DOCTORS|$)'
-        match   = re.search(pattern, raw, re.DOTALL | re.IGNORECASE)
-        if match:
-            bu_sections[bu] = match.group(0)
-
-    # fallback: just show analysis from LLM text
-    kpi_cards_html = ""
-    if bu_sections:
-        kpi_cards = []
-        for kpi_name, (pat, lower_better) in kpi_patterns.items():
-            bu_vals = {}
-            for bu, section in bu_sections.items():
-                m = re.search(pat, section, re.IGNORECASE)
-                if m:
-                    val = _parse_number(m.group(1))
-                    bu_vals[bu] = val
-            if len(bu_vals) >= 2:
-                max_v = max(bu_vals.values()) or 1
-                entries = {}
-                for bu, v in bu_vals.items():
-                    entries[bu] = (v, max_v, f"{v:.1f}%")
-                kpi_cards.append(make_kpi_card(kpi_name, entries, lower_better))
-
-        if kpi_cards:
-            kpi_cards_html = f'<div class="kpi-grid">{"".join(kpi_cards)}</div>'
-
-    # ── winners ───────────────────────────────────────
-    # simple heuristic: count mentions of each BU near positive words
-    winners_html = ""
-    win_counts = {"ASH": [], "SMH": [], "HJH": []}
-    positive_words = ["best", "highest", "top", "أفضل", "أعلى"]
-    lines = raw.split("\n")
-    for line in lines:
-        ll = line.lower()
-        for bu in ["ASH", "SMH", "HJH"]:
-            if bu.lower() in ll and any(pw in ll for pw in positive_words):
-                win_counts[bu].append(line.strip())
-
-    winner_data = [
-        {"bu": bu, "desc": f"leads in {len(v)} area(s)", "kpis": len(v)}
-        for bu, v in win_counts.items() if v
-    ]
-    if winner_data:
-        winner_data.sort(key=lambda x: -x["kpis"])
-        winners_html = f"""
-        <div class="section-title">Winner per KPI</div>
-        {make_winner_rows(winner_data)}"""
-
-    # ── analysis: strip structured data, keep explanatory text ──
-    analysis_lines = []
-    skip_patterns  = re.compile(
-        r'(={3,}|RANKING|BU COMPARISON|Target|Actual|#\d+|\|\s)', re.IGNORECASE)
-    for line in lines:
-        stripped = line.strip()
-        if stripped and len(stripped) > 30 and not skip_patterns.search(stripped):
-            # convert inline bold + numbers to tags
-            stripped = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', stripped)
-            stripped = re.sub(r'(\d+\.?\d*%)',
-                lambda m: f'<span class="tag-green">{m.group(1)}</span>'
-                          if float(m.group(1).replace('%','')) >= 80
-                          else (f'<span class="tag-red">{m.group(1)}</span>'
-                                if float(m.group(1).replace('%','')) < 50
-                                else f'<span class="tag-amber">{m.group(1)}</span>'),
-                stripped)
-            analysis_lines.append(stripped)
-
-    analysis_html = ""
-    if analysis_lines:
-        analysis_html = make_analysis_block(analysis_lines[:6])
-
-    # ── suggest chips ─────────────────────────────────
-    chips = [
-        {"label": "ASH doctors breakdown", "prompt": "Show ASH doctors performance"},
-        {"label": "SMH no-show details",   "prompt": "Why is SMH no-show % high?"},
-        {"label": "HJH improvement plan",  "prompt": "How to improve HJH revenue achievement?"},
-    ]
-    chips_html = make_suggest_chips(chips)
-
-    # ── assemble ──────────────────────────────────────
-    inner = f"""
-    {make_context_badge("comparison · " + query.replace("compare","").strip()[:40])}
-    {kpi_cards_html}
-    {winners_html}
-    {analysis_html}
-    {chips_html}
-    """
-    return f'<div class="msg-bot"><div class="bot-avatar">🤖</div><div class="bubble">{inner}</div></div>'
-
-
-def _render_ranking(raw: str, query: str) -> str:
-    """Parses ranking text → bar chart ranking + analysis."""
-    lines   = raw.split("\n")
-    doctors = []
-
-    for line in lines:
-        m = re.search(r'#\s*(\d+)\s+Dr\.?\s*([\w\s]+?)\s+([\d,]+\.?\d*)', line)
-        if m:
-            rank = int(m.group(1))
-            name = m.group(2).strip()
-            val  = _parse_number(m.group(3))
-            doctors.append({"rank": rank, "name": f"Dr. {name}", "raw": val})
-
-    # if values are revenues, convert to achievement % if possible
-    if doctors:
-        max_val = max(d["raw"] for d in doctors) or 1
-        for d in doctors:
-            pct = d["raw"] / max_val * 100
-            d["pct"]   = pct
-            d["color"] = _pct_color(pct)
-        ranking_html = make_rank_rows(doctors[:10])
-    else:
-        ranking_html = f"<pre style='font-size:12px'>{raw[:600]}</pre>"
-
-    # extract metric name from raw
-    metric_match = re.search(r'RANKING:\s*(.+?)[\|\n]', raw)
-    metric       = metric_match.group(1).strip() if metric_match else "metric"
-
-    # analysis lines
-    analysis_lines = [
-        l.strip() for l in lines
-        if len(l.strip()) > 40 and not re.search(r'(={3,}|#\d+|RANKING)', l)
-    ]
-    analysis_html = make_analysis_block(analysis_lines[:4]) if analysis_lines else ""
-
-    chips = [
-        {"label": "Doctor details", "prompt": f"Show performance of {doctors[0]['name']}" if doctors else "Show doctor performance"},
-        {"label": "Compare by BU",  "prompt": "Compare all BUs"},
-    ]
-
-    inner = f"""
-    {make_context_badge(metric + " · ranking")}
-    {ranking_html}
-    {analysis_html}
-    {make_suggest_chips(chips)}
-    """
-    return f'<div class="msg-bot"><div class="bot-avatar">🤖</div><div class="bubble">{inner}</div></div>'
-
-
-def _render_trend(raw: str, query: str) -> str:
-    """Parses monthly trend text → sparkline + KPI cards + analysis."""
-    MONTH_MAP = {"Jan":1,"Feb":2,"Mar":3,"Apr":4,"May":5,"Jun":6,
-                 "Jul":7,"Aug":8,"Sep":9,"Oct":10,"Nov":11,"Dec":12}
-    monthly = {}
-    for abbr, num in MONTH_MAP.items():
-        m = re.search(rf'{abbr}\s+([\d,]+\.?\d*)', raw)
-        if m:
-            monthly[num] = _parse_number(m.group(1))
-
-    sorted_months = sorted(monthly.keys())
-    values = [monthly[k] for k in sorted_months]
-    labels = [list(MONTH_MAP.keys())[k-1] for k in sorted_months]
-
-    spark_html = make_sparkline(values, labels) if values else ""
-
-    # summary KPI cards
-    kpi_html = ""
-    if values:
-        avg   = sum(values)/len(values)
-        best  = max(values)
-        worst = min(values)
-        bi    = values.index(best);  best_m  = labels[bi]  if bi < len(labels)  else ""
-        wi    = values.index(worst); worst_m = labels[wi]  if wi < len(labels)  else ""
-
-        def fmt(v):
-            return f"{v/1_000_000:.2f}M" if v >= 1_000_000 else f"{v/1_000:.0f}K" if v >= 1_000 else f"{v:.0f}"
-
-        kpi_html = f"""
-        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
-          <div class="kpi-card"><div class="kpi-name">Best month</div>
-            <div style="font-size:14px;font-weight:600;color:#185FA5">{best_m} · {fmt(best)}</div></div>
-          <div class="kpi-card"><div class="kpi-name">Worst month</div>
-            <div style="font-size:14px;font-weight:600;color:#A32D2D">{worst_m} · {fmt(worst)}</div></div>
-          <div class="kpi-card"><div class="kpi-name">Monthly avg</div>
-            <div style="font-size:14px;font-weight:600">{fmt(avg)}</div></div>
-          <div class="kpi-card"><div class="kpi-name">Months tracked</div>
-            <div style="font-size:14px;font-weight:600">{len(values)}</div></div>
-        </div>"""
-
-    analysis_lines = [
-        l.strip() for l in raw.split("\n")
-        if len(l.strip()) > 40 and not re.search(r'(={3,}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Avg|Best|Low)', l)
-    ]
-    analysis_html = make_analysis_block(analysis_lines[:3]) if analysis_lines else ""
-
-    metric_m = re.search(r'MONTHLY TREND:\s*(.+?)[\|\n]', raw)
-    metric   = metric_m.group(1).strip() if metric_m else "metric"
-
-    chips = [
-        {"label": "Compare with target",  "prompt": f"Compare {metric} actual vs target"},
-        {"label": "Doctor breakdown",     "prompt": f"Which doctor drove the best month?"},
-    ]
-
-    inner = f"""
-    {make_context_badge(metric + " · monthly trend")}
-    {kpi_html}
-    <div class="section-title">Monthly breakdown</div>
-    {spark_html}
-    {analysis_html}
-    {make_suggest_chips(chips)}
-    """
-    return f'<div class="msg-bot"><div class="bot-avatar">🤖</div><div class="bubble">{inner}</div></div>'
-
-
-def _render_year_summary(raw: str, query: str) -> str:
-    """Parses year summary text → KPI cards grid + analysis."""
-    def extract_pct(pattern):
-        m = re.search(pattern, raw, re.IGNORECASE)
-        return _parse_number(m.group(1)) if m else None
-
-    rev_ach  = extract_pct(r'revenue.*?achievement.*?([\d.]+)%')
-    cas_ach  = extract_pct(r'cases.*?achievement.*?([\d.]+)%')
-    no_show  = extract_pct(r'no.?show.*?([\d.]+)%')
-    leakage  = extract_pct(r'leakage.*?([\d.]+)%')
-    pms      = extract_pct(r'pms.*?([\d.]+)%')
-    retention= extract_pct(r'retention.*?([\d.]+)%')
-
-    def card(label, val, lower_better=False):
-        if val is None: return ""
-        if lower_better:
-            color = "#0F6E56" if val < 10 else ("#BA7517" if val < 20 else "#A32D2D")
-        else:
-            color = "#0F6E56" if val >= 90 else ("#BA7517" if val >= 75 else "#A32D2D")
-        return f"""
-        <div class="kpi-card">
-          <div class="kpi-name">{label}</div>
-          <div style="font-size:16px;font-weight:700;color:{color}">{val:.1f}%</div>
-        </div>"""
-
-    kpi_html = f"""
-    <div class="kpi-grid">
-      {card("Revenue achievement", rev_ach)}
-      {card("Cases achievement", cas_ach)}
-      {card("No-show %", no_show, lower_better=True)}
-      {card("Service leakage %", leakage, lower_better=True)}
-      {card("Doctor PMS %", pms)}
-      {card("Patient retention %", retention)}
-    </div>"""
-
-    # top / bottom doctor
-    top_m    = re.search(r'[Tt]op\s*:?\s*Dr\.?\s*([\w\s]+?)\s*\(([\d.]+)%\)', raw)
-    bottom_m = re.search(r'[Bb]ottom\s*:?\s*Dr\.?\s*([\w\s]+?)\s*\(([\d.]+)%\)', raw)
-    doctors_html = ""
-    if top_m or bottom_m:
-        doctors_html = '<div class="section-title">Doctor highlights</div>'
-        if top_m:
-            doctors_html += f"""
-            <div class="winner-row">
-              <span style="color:#0F6E56;font-size:14px">↑</span>
-              <span class="winner-bu" style="color:#0F6E56">Top</span>
-              <span class="winner-desc">Dr. {top_m.group(1).strip()}</span>
-              <span class="winner-val" style="color:#0F6E56">{top_m.group(2)}%</span>
-            </div>"""
-        if bottom_m:
-            doctors_html += f"""
-            <div class="winner-row">
-              <span style="color:#A32D2D;font-size:14px">↓</span>
-              <span class="winner-bu" style="color:#A32D2D">Low</span>
-              <span class="winner-desc">Dr. {bottom_m.group(1).strip()}</span>
-              <span class="winner-val" style="color:#A32D2D">{bottom_m.group(2)}%</span>
-            </div>"""
-
-    analysis_lines = [
-        l.strip() for l in raw.split("\n")
-        if len(l.strip()) > 40 and not re.search(
-            r'(={3,}|Target|Actual|Achievement|YEAR SUMMARY|REVENUE|CASES|AVERAGE|DOCTORS|RANKING)', l)
-    ]
-    analysis_html = make_analysis_block(analysis_lines[:4]) if analysis_lines else ""
-
-    year_m = re.search(r'YEAR SUMMARY:\s*(\d{4})', raw)
-    year   = year_m.group(1) if year_m else "year"
-
-    chips = [
-        {"label": "Monthly breakdown",   "prompt": f"Monthly revenue trend {year}"},
-        {"label": "Doctor rankings",     "prompt": f"Rank all doctors by revenue {year}"},
-        {"label": "Compare BUs",         "prompt": f"Compare ASH vs SMH vs HJH in {year}"},
-    ]
-
-    inner = f"""
-    {make_context_badge(f"year summary · {year}")}
-    {kpi_html}
-    {doctors_html}
-    {analysis_html}
-    {make_suggest_chips(chips)}
-    """
-    return f'<div class="msg-bot"><div class="bot-avatar">🤖</div><div class="bubble">{inner}</div></div>'
-
-
-def _render_doctor(raw: str, query: str) -> str:
-    """Parses single-doctor report → KPI cards + ranking badge + analysis."""
-    def extract_pct(pattern):
-        m = re.search(pattern, raw, re.IGNORECASE)
-        return _parse_number(m.group(1)) if m else None
-
-    def extract_num(pattern):
-        m = re.search(pattern, raw, re.IGNORECASE)
-        return _parse_number(m.group(1)) if m else None
-
-    rev_ach  = extract_pct(r'[Aa]chievement\s*:\s*([\d.]+)%')
-    cas_ach  = extract_pct(r'[Cc]ases.*?[Aa]chievement\s*:\s*([\d.]+)%')
-    pms      = extract_pct(r'PMS.*?([\d.]+)%')
-    no_show  = extract_pct(r'[Nn]o.?[Ss]how.*?([\d.]+)%')
-    leakage  = extract_pct(r'[Ll]eakage\s*%?\s*:\s*([\d.]+)%')
-    retention= extract_pct(r'[Rr]etention.*?([\d.]+)%')
-
-    def card(label, val, lower_better=False, suffix="%"):
-        if val is None: return ""
-        if lower_better:
-            color = "#0F6E56" if val < 10 else ("#BA7517" if val < 20 else "#A32D2D")
-        else:
-            color = "#0F6E56" if val >= 90 else ("#BA7517" if val >= 75 else "#A32D2D")
-        return f"""
-        <div class="kpi-card">
-          <div class="kpi-name">{label}</div>
-          <div style="font-size:16px;font-weight:700;color:{color}">{val:.1f}{suffix}</div>
-        </div>"""
-
-    kpi_html = f"""
-    <div class="kpi-grid">
-      {card("Revenue achievement", rev_ach)}
-      {card("Cases achievement", cas_ach)}
-      {card("Doctor PMS %", pms)}
-      {card("No-show %", no_show, lower_better=True)}
-      {card("Service leakage %", leakage, lower_better=True)}
-      {card("Patient retention %", retention)}
-    </div>"""
-
-    rank_m       = re.search(r'OVERALL RANKING:\s*#?(\d+)\s*of\s*(\d+)', raw)
-    rank_html    = ""
-    if rank_m:
-        r, total = int(rank_m.group(1)), int(rank_m.group(2))
-        r_color  = "#0F6E56" if r <= 3 else ("#BA7517" if r <= total//2 else "#A32D2D")
-        rank_html = f"""
-        <div class="section-title">Overall ranking</div>
-        <div class="winner-row">
-          <span style="font-size:20px;color:{r_color};font-weight:700">#{r}</span>
-          <span class="winner-desc">out of {total} doctors</span>
-        </div>"""
-
-    # doctor name
-    doc_m    = re.search(r'DOCTOR REPORT:\s*Dr\.?\s*([\w\s]+?)\s*\|', raw)
-    doc_name = f"Dr. {doc_m.group(1).strip()}" if doc_m else "Doctor"
-
-    analysis_lines = [
-        l.strip() for l in raw.split("\n")
-        if len(l.strip()) > 40 and not re.search(
-            r'(={3,}|Target|Actual|Achievement|DOCTOR REPORT|REVENUE|CASES|QUALITY|OTHER|OVERALL|#\d+)', l)
-    ]
-    analysis_html = make_analysis_block(analysis_lines[:4]) if analysis_lines else ""
-
-    chips = [
-        {"label": "Monthly trend",      "prompt": f"Monthly revenue trend for {doc_name}"},
-        {"label": "Compare with peers", "prompt": f"Compare all doctors by revenue"},
-        {"label": "Root cause analysis","prompt": f"Why is no-show % high for {doc_name}?"},
-    ]
-
-    inner = f"""
-    {make_context_badge(doc_name + " · performance")}
-    {kpi_html}
-    {rank_html}
-    {analysis_html}
-    {make_suggest_chips(chips)}
-    """
-    return f'<div class="msg-bot"><div class="bot-avatar">🤖</div><div class="bubble">{inner}</div></div>'
-
-
-# ══════════════════════════════════════════════════════
-# TOOLS (unchanged from original)
+# TOOLS
 # ══════════════════════════════════════════════════════
 METRIC_ALIASES = {
     "revenue":"Total Revenue","total revenue":"Total Revenue",
@@ -814,7 +576,7 @@ def _filter_df(year="all", bu="all", doctor="all"):
         if matched: df = df[df["Doctor Name"] == matched]
     return df
 
-def _find_col(metric: str) -> str:
+def _find_col(metric):
     key  = metric.strip().lower()
     if key in METRIC_ALIASES: return METRIC_ALIASES[key]
     skip = {"Year","Month No","Month","Month_Year","BU","Doctor Name"}
@@ -830,7 +592,7 @@ def _find_col(metric: str) -> str:
 def _fmt(val, col):
     return f"{val:.1f}%" if "%" in col else f"{val:,.0f}"
 
-def search_knowledge_base(query: str) -> str:
+def search_knowledge_base(query):
     keywords = [w for w in re.split(r'[\s%,]+', query.lower()) if len(w) > 2]
     results  = []
     for sheet_name, df in DATA["knowledge_base"].items():
@@ -838,10 +600,9 @@ def search_knowledge_base(query: str) -> str:
             text = " ".join(str(v) for v in row.values).lower()
             if any(k in text for k in keywords):
                 results.append(f"[{sheet_name}] " + " | ".join(f"{c}: {v}" for c, v in row.items()))
-    return ("No matching records." if not results
-            else f"Found {len(results)} records:\n\n" + "\n".join(results[:30]))
+    return "No matching records." if not results else f"Found {len(results)} records:\n\n" + "\n".join(results[:30])
 
-def get_doctor_performance(doctor_name: str, year: str = "all") -> str:
+def get_doctor_performance(doctor_name, year="all"):
     df = _filter_df(year=year, doctor=doctor_name)
     if df.empty: return f"No data for '{doctor_name}'."
     matched  = df["Doctor Name"].iloc[0]
@@ -862,14 +623,13 @@ def get_doctor_performance(doctor_name: str, year: str = "all") -> str:
     all_docs["Rank"] = all_docs.index + 1
     my_rank  = all_docs.loc[all_docs["Doctor Name"] == matched, "Rank"].values
     rank_str = f"#{int(my_rank[0])} of {len(all_docs)}" if len(my_rank) else "N/A"
-    out = [
+    return "\n".join([
         f"DOCTOR REPORT: Dr. {matched} | Period: {'All Years' if year=='all' else year}",
-        f"{'='*55}",
+        "="*55,
         f"REVENUE",
         f"  Target      : {t_rev:>18,.0f}",
         f"  Actual      : {a_rev:>18,.0f}",
         f"  Achievement : {rev_ach:>17.1f}%",
-        f"  Gap         : {a_rev-t_rev:>18,.0f}",
         f"CASES",
         f"  Target      : {t_cas:>18,.0f}",
         f"  Actual      : {a_cas:>18,.0f}",
@@ -885,10 +645,9 @@ def get_doctor_performance(doctor_name: str, year: str = "all") -> str:
         f"  Cancelled Clinics   : {cancelled:>8,.0f}",
         f"  Leakage Rev Losses  : {leakage_rev:>8,.0f}",
         f"OVERALL RANKING: {rank_str}",
-    ]
-    return "\n".join(out)
+    ])
 
-def rank_doctors(metric: str = "Total Revenue", year: str = "all", bu: str = "all", order: str = "desc") -> str:
+def rank_doctors(metric="Total Revenue", year="all", bu="all", order="desc"):
     df  = _filter_df(year=year, bu=bu)
     if df.empty: return "No data."
     col = _find_col(metric)
@@ -901,7 +660,7 @@ def rank_doctors(metric: str = "Total Revenue", year: str = "all", bu: str = "al
         out.append(f"  #{int(r['Rank']):2}  Dr. {r['Doctor Name']:<12}  {_fmt(r[col], col)}")
     return "\n".join(out)
 
-def compare_all_doctors(year: str = "all", bu: str = "all") -> str:
+def compare_all_doctors(year="all", bu="all"):
     df = _filter_df(year=year, bu=bu)
     if df.empty: return "No data."
     g = df.groupby("Doctor Name").agg(
@@ -920,7 +679,7 @@ def compare_all_doctors(year: str = "all", bu: str = "all") -> str:
                    f"XRef:{r['XR']:.1f}% Ret:{r['RT']:.1f}%")
     return "\n".join(out)
 
-def get_monthly_trend(metric: str, year: str = "all", bu: str = "all", doctor: str = "all") -> str:
+def get_monthly_trend(metric, year="all", bu="all", doctor="all"):
     col = _find_col(metric); agg = "mean" if "%" in col else "sum"
     MONTHS = {1:"Jan",2:"Feb",3:"Mar",4:"Apr",5:"May",6:"Jun",
               7:"Jul",8:"Aug",9:"Sep",10:"Oct",11:"Nov",12:"Dec"}
@@ -942,7 +701,7 @@ def get_monthly_trend(metric: str, year: str = "all", bu: str = "all", doctor: s
             out += [f"  Avg : {_fmt(avg, col)}", f"  Best: {_fmt(mx, col)} ({mx_m})", f"  Low : {_fmt(mn, col)} ({mn_m})"]
     return "\n".join(out) if len(out) > 2 else "No data."
 
-def compare_business_units(metric: str, year: str, month: int = None) -> str:
+def compare_business_units(metric, year, month=None):
     df = _filter_df(year=year)
     if month:
         try: df = df[df["Month No"] == int(month)]
@@ -957,7 +716,7 @@ def compare_business_units(metric: str, year: str, month: int = None) -> str:
         out.append(f"  {r['BU']:<5}  {_fmt(r[col], col)}{pct}")
     return "\n".join(out)
 
-def get_year_summary(year: str, bu: str = "all") -> str:
+def get_year_summary(year, bu="all"):
     df = _filter_df(year=year, bu=bu)
     if df.empty: return f"No data for year={year}."
     t_rev = df["Target Revenue"].sum(); a_rev = df["Total Revenue"].sum()
@@ -968,7 +727,7 @@ def get_year_summary(year: str, bu: str = "all") -> str:
     doc_rev["Ach"] = (doc_rev["AR"] / doc_rev["TR"] * 100).round(1)
     doc_rev = doc_rev.sort_values("Ach", ascending=False)
     top = doc_rev.iloc[0]; bottom = doc_rev.iloc[-1]
-    out = [
+    return "\n".join([
         f"YEAR SUMMARY: {year} | BU: {bu}", "="*50,
         f"REVENUE",
         f"  Target      : {t_rev:>18,.0f}",
@@ -988,10 +747,9 @@ def get_year_summary(year: str, bu: str = "all") -> str:
         f"DOCTORS",
         f"  Top    : Dr. {top['Doctor Name']} ({top['Ach']:.1f}%)",
         f"  Bottom : Dr. {bottom['Doctor Name']} ({bottom['Ach']:.1f}%)",
-    ]
-    return "\n".join(out)
+    ])
 
-def get_root_causes_analysis(kpi_name: str, bu: str = "all", year: str = "all") -> str:
+def get_root_causes_analysis(kpi_name, bu="all", year="all"):
     df = _filter_df(year=year, bu=bu); col = _find_col(kpi_name)
     kb = search_knowledge_base(kpi_name)
     out = [f"ROOT CAUSE ANALYSIS: {kpi_name} | BU:{bu} | Year:{year}", "="*55]
@@ -1008,7 +766,7 @@ def get_root_causes_analysis(kpi_name: str, bu: str = "all", year: str = "all") 
     out.append(f"\nKnowledge Base:\n{kb[:2000]}")
     return "\n".join(out)
 
-def get_data_summary(query: str = "") -> str:
+def get_data_summary(query=""):
     df   = DATA["opd_main_df"]
     skip = {"Year","Month No","Month","Month_Year","BU","Doctor Name"}
     kpis = [c for c in df.columns if c not in skip]
@@ -1016,7 +774,7 @@ def get_data_summary(query: str = "") -> str:
             f"Doctors: {DATA['doctors']}\nKPIs:\n" +
             "\n".join(f"  {i:2}. {c}" for i, c in enumerate(kpis, 1)))
 
-def list_kpis(query: str = "") -> str:
+def list_kpis(query=""):
     skip = {"Year","Month No","Month","Month_Year","BU","Doctor Name"}
     kpis = [c for c in DATA["opd_main_df"].columns if c not in skip]
     return "KPIs:\n" + "\n".join(f"  {i:2}. {c}" for i, c in enumerate(kpis, 1))
@@ -1058,13 +816,12 @@ CRITICAL RULES:
 4. Be concise — give exact numbers. Do NOT hallucinate.
 5. After the data, write 2-3 sentences of analysis explaining what the numbers mean and what action to take.
 6. Use EXACT column names: "Total Revenue", "No. Cases", "No-Show %", "Service Leakage %", "Doctor PMS %", "Patient Retention %", "Cross Referral %".
-7. Do not call more than 3 tools per request.
-8. Always end your response with 1-2 actionable insights starting with 'Insight:'"""
+7. Do not call more than 3 tools per request."""
 
 # ══════════════════════════════════════════════════════
 # AGENT
 # ══════════════════════════════════════════════════════
-def call_github(messages: list) -> dict:
+def call_github(messages):
     headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Content-Type": "application/json"}
     payload = {"model": GITHUB_MODEL, "messages": messages, "tools": TOOLS_SCHEMA,
                "tool_choice": "auto", "temperature": 0, "max_tokens": 1500}
@@ -1090,7 +847,7 @@ def call_github(messages: list) -> dict:
             time.sleep(5)
     return {"message": {"content": "Max retries.", "tool_calls": []}}
 
-def execute_tool(tool_call: dict) -> str:
+def execute_tool(tool_call):
     name = tool_call.get("function", {}).get("name", "")
     args = tool_call.get("function", {}).get("arguments", {})
     if isinstance(args, str):
@@ -1101,7 +858,7 @@ def execute_tool(tool_call: dict) -> str:
     try: return func(**args)
     except Exception as e: return f"Tool error: {e}"
 
-def run_agent(user_query: str, chat_history: list) -> str:
+def run_agent(user_query, chat_history):
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     for role, content in chat_history[-4:]:
         messages.append({"role": role, "content": content})
@@ -1138,30 +895,30 @@ if "messages" not in st.session_state:
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Header
-st.markdown("""
-<div class="chat-header">
-  <div style="font-size:28px">📊</div>
+# ── Header ────────────────────────────────────────────
+st.markdown(f"""
+<div style='position:sticky;top:0;z-index:100;background:#185FA5;color:white;
+     padding:14px 24px;display:flex;align-items:center;gap:12px;
+     margin-bottom:20px;border-radius:0 0 16px 16px;
+     box-shadow:0 2px 12px rgba(24,95,165,0.3);'>
+  <div style='font-size:28px;'>📊</div>
   <div>
-    <h1>Andalusia OPD Analytics</h1>
-    <p>AI-powered KPI Assistant</p>
+    <div style='font-size:18px;font-weight:600;'>Andalusia OPD Analytics</div>
+    <div style='font-size:12px;opacity:.8;'>AI-powered KPI Assistant</div>
   </div>
-  <div style="margin-left:auto">
-    <span class="bu-badge">ASH</span>
-    <span class="bu-badge">SMH</span>
-    <span class="bu-badge">HJH</span>
+  <div style='margin-left:auto;display:flex;gap:6px;'>
+    {''.join(f"<span style='background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;font-size:12px;'>{b}</span>" for b in ['ASH','SMH','HJH'])}
   </div>
 </div>
+<div style='{S["wrap"]}'>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="chat-wrapper">', unsafe_allow_html=True)
-
-# Welcome
+# ── Welcome ───────────────────────────────────────────
 if not st.session_state.messages:
     st.markdown("""
-    <div class="welcome-box">
-      <h2>Welcome to OPD Analytics 👋</h2>
-      <p>Ask me anything about doctors, revenue, KPIs, or performance trends.</p>
+    <div style='text-align:center;padding:40px 20px 20px;color:#555;'>
+      <div style='color:#185FA5;font-size:22px;font-weight:600;margin-bottom:8px;'>Welcome to OPD Analytics 👋</div>
+      <div style='font-size:15px;color:#888;'>Ask me anything about doctors, revenue, KPIs, or performance trends.</div>
     </div>
     """, unsafe_allow_html=True)
     cols = st.columns(2)
@@ -1179,18 +936,18 @@ if not st.session_state.messages:
                 st.session_state.pending_query = s.split(" ", 1)[1]
                 st.rerun()
 
-# Render history
+# ── Chat history ──────────────────────────────────────
 for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(
-            f'<div class="msg-user"><div class="bubble">{msg["content"]}</div></div>',
+            f"<div style='{S['user_row']}'><div style='{S['user_bub']}'>{msg['content']}</div></div>",
             unsafe_allow_html=True)
     else:
-        # already formatted HTML stored
         st.markdown(msg["content"], unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
+# ── Input ─────────────────────────────────────────────
 user_input = st.chat_input("Ask about doctors, revenue, KPIs...")
 if "pending_query" in st.session_state:
     user_input = st.session_state.pop("pending_query")
@@ -1199,15 +956,12 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.rerun()
 
-# Generate response
+# ── Generate ──────────────────────────────────────────
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     last_query = st.session_state.messages[-1]["content"]
     with st.spinner("Analyzing data..."):
         raw_answer = run_agent(last_query, st.session_state.chat_history)
-
-    # ── format the response smartly ──
     formatted = format_response(raw_answer, last_query)
-
     st.session_state.messages.append({"role": "assistant", "content": formatted})
     st.session_state.chat_history.append(("user", last_query))
     st.session_state.chat_history.append(("assistant", raw_answer[:400]))
