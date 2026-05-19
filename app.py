@@ -2,6 +2,8 @@ import re, json, requests, pandas as pd
 import time, os
 import streamlit as st
 from datetime import datetime
+import plotly.express as px
+import plotly.graph_objects as go
 
 # ══════════════════════════════════════════════════════
 # PAGE CONFIG
@@ -14,7 +16,7 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════════════
-# CUSTOM CSS — PROFESSIONAL UI (DESIGN ONLY)
+# CUSTOM CSS — Professional & Dashboard‑ready
 # ══════════════════════════════════════════════════════
 st.markdown("""
 <style>
@@ -24,40 +26,39 @@ st.markdown("""
 
   /* Global typography */
   body, .stApp {
-    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: #F6F9FC;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: #F4F7FC;
   }
 
   /* Main chat container */
   .chat-wrapper {
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 0 20px 100px 20px;
   }
 
-  /* Header - modern glass effect */
+  /* Header – modern deep blue + gold accent */
   .chat-header {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: linear-gradient(135deg, #0F3B6A 0%, #185FA5 100%);
+    background: linear-gradient(105deg, #0A2B4E 0%, #1A4A7A 100%);
     backdrop-filter: blur(2px);
     color: white;
-    padding: 16px 28px;
+    padding: 14px 28px;
     display: flex;
     align-items: center;
     gap: 16px;
     margin-bottom: 24px;
-    border-radius: 0 0 20px 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.2);
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+    border-bottom: 1px solid rgba(255,215,140,0.3);
   }
   .chat-header h1 {
     margin: 0;
     font-size: 20px;
     font-weight: 600;
     letter-spacing: -0.2px;
-    color: white;
   }
   .chat-header p {
     margin: 0;
@@ -65,191 +66,156 @@ st.markdown("""
     opacity: 0.85;
   }
   .bu-badge {
-    background: rgba(255,255,255,0.18);
+    background: rgba(255,215,140,0.18);
     backdrop-filter: blur(4px);
     padding: 5px 12px;
     border-radius: 40px;
     font-size: 12px;
     font-weight: 500;
     margin-left: 6px;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,215,140,0.4);
+    color: #FFE4A3;
   }
 
-  /* User message - crisp bubble */
+  /* Chat bubbles */
   .msg-user {
     display: flex;
     justify-content: flex-end;
-    margin: 16px 0;
+    margin: 18px 0;
   }
   .msg-user .bubble {
-    background: #185FA5;
+    background: #1A4A7A;
     color: white;
-    padding: 10px 18px;
-    border-radius: 22px 22px 6px 22px;
+    padding: 10px 20px;
+    border-radius: 26px 26px 6px 26px;
     max-width: 70%;
     font-size: 15px;
     line-height: 1.5;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    font-weight: 450;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   }
 
-  /* Assistant message - clean, elevated */
   .msg-bot {
     display: flex;
     gap: 12px;
-    margin: 20px 0;
+    margin: 22px 0;
     align-items: flex-start;
   }
   .bot-avatar {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #EFF6FF, #E1EEFA);
+    background: linear-gradient(135deg, #E8F0FA, #D4E2F5);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 18px;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    border: 1px solid rgba(24,95,165,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border: 1px solid rgba(26,74,122,0.2);
   }
   .msg-bot .bubble {
     background: #FFFFFF;
-    border: 1px solid #E6EDF4;
-    padding: 16px 22px;
-    border-radius: 6px 22px 22px 22px;
+    border: 1px solid #E2EAF2;
+    padding: 16px 24px;
+    border-radius: 8px 24px 24px 24px;
     max-width: 85%;
     font-size: 15px;
     line-height: 1.65;
-    color: #1E2A3E;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-    transition: box-shadow 0.2s;
-  }
-  .msg-bot .bubble:hover {
-    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    color: #1F2A44;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.02);
   }
 
-  /* KPI cards inside bot message - modern dashboard style */
+  /* Dashboard container */
+  .dashboard-container {
+    margin: 20px 0 20px 48px;
+    background: #FBFDFF;
+    border-radius: 24px;
+    padding: 12px 16px;
+    border: 1px solid #E6EDF5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+
+  /* KPI card grid */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    margin: 16px 0 8px;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
   }
   .kpi-card {
-    background: #FBFDFF;
-    border: 1px solid #E2EAF2;
-    border-radius: 16px;
-    padding: 12px 14px;
+    background: white;
+    border: 1px solid #E2E9F2;
+    border-radius: 20px;
+    padding: 14px 12px;
     transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
   }
   .kpi-card:hover {
     border-color: #BED3EA;
-    background: #FFFFFF;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.04);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
   }
   .kpi-label {
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: #5E7A93;
+    letter-spacing: 0.5px;
+    color: #5E7F9E;
     margin-bottom: 6px;
   }
   .kpi-value {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
-    color: #185FA5;
-    line-height: 1.2;
+    color: #1A4A7A;
   }
-  .kpi-value.green  { color: #107C4E; }
-  .kpi-value.red    { color: #C7423F; }
-  .kpi-value.orange { color: #C45C1A; }
-
-  /* Thinking indicator */
-  .thinking {
-    display: flex;
-    gap: 12px;
-    margin: 16px 0;
-    align-items: center;
-  }
-  .thinking .bubble {
-    background: #F0F4F9;
-    border: 1px solid #E2EAF2;
-    padding: 10px 18px;
-    border-radius: 6px 22px 22px 22px;
-    font-size: 14px;
-    color: #5E7A93;
-    font-style: italic;
-  }
-
-  /* Suggested questions */
-  .suggestions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 20px 0 12px 48px;
-  }
-  .suggestions button {
-    background: white;
-    border: 1px solid #CFDFEB;
-    border-radius: 40px;
-    padding: 6px 14px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #185FA5;
-    transition: all 0.2s;
-  }
-  .suggestions button:hover {
-    background: #EFF6FF;
-    border-color: #185FA5;
-    transform: translateY(-1px);
-  }
+  .kpi-value.green { color: #1F8A4C; }
+  .kpi-value.red   { color: #C23B3B; }
+  .kpi-value.gold  { color: #C57F1E; }
 
   /* Welcome box */
   .welcome-box {
     text-align: center;
-    padding: 48px 24px 32px;
+    padding: 48px 24px;
     background: white;
-    border-radius: 32px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.03);
-    border: 1px solid #E6EDF4;
-    margin: 16px 0;
+    border-radius: 36px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.05);
+    border: 1px solid #E6EDF5;
   }
   .welcome-box h2 {
-    color: #0F3B6A;
-    font-size: 26px;
+    color: #0A2B4E;
+    font-size: 28px;
     font-weight: 600;
-    margin-bottom: 12px;
   }
   .welcome-box p {
     font-size: 16px;
-    color: #617B9B;
-    margin-bottom: 28px;
+    color: #5C7E9E;
   }
 
-  /* Tables / ranking formatting (preserve readability) */
-  .msg-bot .bubble table, .msg-bot .bubble pre {
-    background: #F8F9FC;
-    border-radius: 12px;
-    padding: 8px;
+  /* Suggestions */
+  .stButton button {
+    border-radius: 40px !important;
+    font-weight: 500 !important;
+    border: 1px solid #CFDFEB !important;
+    background: white !important;
+    color: #1A4A7A !important;
+    transition: all 0.2s;
   }
-  hr {
-    margin: 12px 0;
-    border-color: #E6EDF4;
+  .stButton button:hover {
+    background: #EFF4FA !important;
+    border-color: #1A4A7A !important;
   }
 </style>
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════
-# CONFIG
+# CONFIG (unchanged)
 # ══════════════════════════════════════════════════════
 GITHUB_TOKEN    = os.environ.get("GITHUB_TOKEN", "ضع_token_هنا")
 GITHUB_BASE_URL = "https://models.inference.ai.azure.com"
 GITHUB_MODEL    = "gpt-4o"
 
 # ══════════════════════════════════════════════════════
-# LOAD DATA  (cached) — unchanged
+# LOAD DATA (unchanged)
 # ══════════════════════════════════════════════════════
 @st.cache_resource(show_spinner="Loading data...")
 def load_data():
@@ -283,7 +249,7 @@ def load_data():
 DATA = load_data()
 
 # ══════════════════════════════════════════════════════
-# HELPERS + TOOLS  (same as before — untouched)
+# HELPERS + TOOLS (identical to original — no change)
 # ══════════════════════════════════════════════════════
 METRIC_ALIASES = {
     "revenue":"Total Revenue","total revenue":"Total Revenue",
@@ -562,21 +528,21 @@ TOOLS_SCHEMA = [
     {"type":"function","function":{"name":"list_kpis","description":"List all KPI names.","parameters":{"type":"object","properties":{"query":{"type":"string"}},"required":[]}}},
 ]
 
-SYSTEM_PROMPT = """You are an expert OPD KPI Analytics Assistant for Andalusia hospital system.
+SYSTEM_PROMPT = f"""You are an expert OPD KPI Analytics Assistant for Andalusia hospital system.
 Data covers years 2023, 2024, 2025 across BUs: ASH, SMH, HJH.
-Doctors: """ + str(DATA["doctors"]) + """
+Doctors: {DATA['doctors']}
 
 CRITICAL RULES:
 1. ALWAYS call a tool before answering — never guess or invent numbers.
 2. When user asks about "top doctor" or "best/worst" WITHOUT specifying a year → use year="all".
 3. All percentages are already in % form (e.g. 73.5% not 0.735).
 4. Be concise — give exact numbers. Do NOT hallucinate.
-5. Format your answers clearly with sections and bullet points when presenting data.
+5. Format your answers clearly with sections and bullet points.
 6. Use EXACT column names: "Total Revenue", "No. Cases", "No-Show %", "Service Leakage %", "Doctor PMS %", "Patient Retention %", "Cross Referral %".
 7. Do not call more than 3 tools per request."""
 
 # ══════════════════════════════════════════════════════
-# AGENT CALL — unchanged
+# AGENT CALL (unchanged)
 # ══════════════════════════════════════════════════════
 def call_github(messages: list) -> dict:
     headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Content-Type": "application/json"}
@@ -645,20 +611,75 @@ def run_agent(user_query: str, chat_history: list) -> str:
     return "Reached max steps."
 
 # ══════════════════════════════════════════════════════
-# STREAMLIT UI (unchanged logic, only CSS/header style)
+# DASHBOARD BUILDER (new, design only, does not change tools)
+# ══════════════════════════════════════════════════════
+def build_dashboard(user_query: str):
+    """Generate visual dashboard based on user query (without altering agent logic)."""
+    q = user_query.lower()
+    # Revenue trend for last available year
+    if "revenue" in q or "trend" in q:
+        year = DATA["years"][-1] if DATA["years"] else 2024
+        df = _filter_df(year=str(year))
+        if not df.empty and "Month No" in df.columns and "Total Revenue" in df.columns:
+            monthly = df.groupby("Month No")["Total Revenue"].sum().reset_index()
+            monthly["Month Name"] = monthly["Month No"].apply(lambda x: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][x-1])
+            fig = px.line(monthly, x="Month Name", y="Total Revenue", 
+                          title=f"Revenue Trend {year}", markers=True,
+                          labels={"Total Revenue": "Revenue (EGP)", "Month Name": ""})
+            fig.update_layout(template="simple_white", height=350)
+            return fig
+    # Top doctors bar chart
+    if "top doctor" in q or "rank" in q or "best" in q:
+        df = _filter_df(year="all")
+        if not df.empty:
+            top = df.groupby("Doctor Name")["Total Revenue"].sum().nlargest(5).reset_index()
+            fig = px.bar(top, x="Doctor Name", y="Total Revenue", 
+                         title="Top 5 Doctors by Revenue",
+                         color="Total Revenue", color_continuous_scale="Blues")
+            fig.update_layout(height=350, xaxis_tickangle=-30)
+            return fig
+    # BU comparison
+    if "bu" in q or "compare" in q or "ash" in q or "smh" in q:
+        year = DATA["years"][-1] if DATA["years"] else 2024
+        df = _filter_df(year=str(year))
+        if not df.empty and "BU" in df.columns and "Total Revenue" in df.columns:
+            bu_rev = df.groupby("BU")["Total Revenue"].sum().reset_index()
+            fig = px.pie(bu_rev, names="BU", values="Total Revenue", 
+                         title=f"Revenue Distribution by BU ({year})",
+                         color_discrete_sequence=px.colors.sequential.Blues_r)
+            fig.update_layout(height=350)
+            return fig
+    # Doctor performance (if specific doctor mentioned)
+    for doc in DATA["doctors"]:
+        if doc.lower() in q:
+            df = _filter_df(doctor=doc, year="all")
+            if not df.empty and "Month No" in df.columns and "Total Revenue" in df.columns:
+                monthly = df.groupby("Month No")["Total Revenue"].sum().reset_index()
+                monthly["Month"] = monthly["Month No"].apply(lambda x: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][x-1])
+                fig = px.line(monthly, x="Month", y="Total Revenue", 
+                              title=f"Monthly Revenue: Dr. {doc}", markers=True)
+                fig.update_layout(height=350)
+                return fig
+    # Default: return a placeholder chart
+    return None
+
+# ══════════════════════════════════════════════════════
+# STREAMLIT UI (with dashboard integration)
 # ══════════════════════════════════════════════════════
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+if "last_query" not in st.session_state:
+    st.session_state.last_query = ""
 
-# Header - same HTML structure but using updated CSS classes
+# Header
 st.markdown("""
 <div class="chat-header">
   <div style="font-size:28px">📊</div>
   <div>
     <h1>Andalusia OPD Analytics</h1>
-    <p>AI-powered KPI Assistant | Real‑time insights</p>
+    <p>AI‑powered KPI Dashboard & Assistant</p>
   </div>
   <div style="margin-left:auto">
     <span class="bu-badge">ASH</span>
@@ -675,15 +696,14 @@ if not st.session_state.messages:
     st.markdown("""
     <div class="welcome-box">
       <h2>Welcome to OPD Analytics 👋</h2>
-      <p>Ask me about doctor performance, revenue trends, KPIs, or benchmarking.</p>
+      <p>Ask about doctors, revenue, KPIs, or trends — get instant insights + dynamic dashboard.</p>
     </div>
     """, unsafe_allow_html=True)
-
     cols = st.columns(2)
     suggestions = [
-        "📈 Top doctor by revenue",
+        "📈 Show top doctor by revenue",
         "🏥 Compare all BUs in 2024",
-        "👨‍⚕️ Show all doctors KPIs",
+        "👨‍⚕️ Compare all doctors KPIs",
         "📅 Monthly revenue trend 2024",
         "🔍 Why is no-show % high?",
         "📊 Year summary for 2024",
@@ -694,8 +714,8 @@ if not st.session_state.messages:
                 st.session_state.pending_query = s.split(" ", 1)[1]
                 st.rerun()
 
-# Render chat history
-for msg in st.session_state.messages:
+# Render chat history with possible dashboard
+for idx, msg in enumerate(st.session_state.messages):
     if msg["role"] == "user":
         st.markdown(f"""
         <div class="msg-user">
@@ -707,17 +727,37 @@ for msg in st.session_state.messages:
           <div class="bot-avatar">🤖</div>
           <div class="bubble">{msg["content"]}</div>
         </div>""", unsafe_allow_html=True)
+        # Show dashboard ONLY for the last assistant message
+        if idx == len(st.session_state.messages)-1 and msg["role"] == "assistant":
+            with st.container():
+                st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
+                # Build dashboard based on last query
+                last_q = st.session_state.last_query
+                dashboard_fig = build_dashboard(last_q)
+                if dashboard_fig:
+                    st.plotly_chart(dashboard_fig, use_container_width=True)
+                else:
+                    # small KPI cards: show summary metrics
+                    df_all = DATA["opd_main_df"]
+                    if not df_all.empty:
+                        col1, col2, col3 = st.columns(3)
+                        total_rev = df_all["Total Revenue"].sum()
+                        total_cases = df_all["No. Cases"].sum()
+                        avg_pms = df_all["Doctor PMS %"].mean()
+                        col1.metric("Total Revenue", f"{total_rev:,.0f}", help="All years combined")
+                        col2.metric("Total Cases", f"{total_cases:,.0f}")
+                        col3.metric("Avg Doctor PMS", f"{avg_pms:.1f}%")
+                st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Input bar
 user_input = st.chat_input("Ask about doctors, revenue, KPIs...")
-
-# Handle suggestion click
 if "pending_query" in st.session_state:
     user_input = st.session_state.pop("pending_query")
 
 if user_input:
+    st.session_state.last_query = user_input
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.rerun()
 
