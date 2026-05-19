@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════════════
-# CUSTOM CSS — Dark Theme + Gold Accents (like image)
+# CUSTOM CSS — Light Professional + Soft Gold
 # ══════════════════════════════════════════════════════
 st.markdown("""
 <style>
@@ -22,29 +22,30 @@ st.markdown("""
     #MainMenu, footer, header { visibility: hidden; }
     .block-container { padding: 0 !important; max-width: 100% !important; }
     
-    /* Global dark background */
+    /* Global background */
     body, .stApp {
-        background: #0E1117;
-        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        background: #F5F7FB;
+        font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
     
-    /* Main chat container */
+    /* Main container */
     .chat-wrapper {
-        max-width: 900px;
+        max-width: 1000px;
         margin: 0 auto;
-        padding: 0 20px 80px 20px;
+        padding: 0 24px 100px 24px;
     }
     
-    /* Header – gold gradient */
+    /* Header – soft gold gradient */
     .chat-header {
         position: sticky;
         top: 0;
         z-index: 100;
-        background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
+        background: linear-gradient(105deg, #F9F3E7 0%, #FEF9EF 100%);
         padding: 16px 28px;
-        margin-bottom: 30px;
-        border-radius: 0 0 24px 24px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        margin-bottom: 28px;
+        border-radius: 0 0 28px 28px;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.02);
+        border-bottom: 1px solid #EADDB5;
         display: flex;
         align-items: center;
         gap: 16px;
@@ -53,139 +54,151 @@ st.markdown("""
         margin: 0;
         font-size: 22px;
         font-weight: 600;
-        color: #0E1117;
-        letter-spacing: -0.3px;
+        color: #2C3A4B;
+        letter-spacing: -0.2px;
     }
     .chat-header p {
         margin: 0;
         font-size: 13px;
-        color: #1F2A3A;
-        opacity: 0.9;
+        color: #6B7A8A;
     }
     .gold-badge {
-        background: rgba(0,0,0,0.2);
+        background: #F0E2B6;
         border-radius: 40px;
-        padding: 4px 12px;
+        padding: 4px 14px;
         font-size: 12px;
         font-weight: 500;
-        color: #0E1117;
+        color: #8B6B2D;
         margin-left: auto;
     }
     
-    /* User message – gold outline */
+    /* User message bubble */
     .msg-user {
         display: flex;
         justify-content: flex-end;
-        margin: 20px 0;
+        margin: 18px 0;
     }
     .msg-user .bubble {
-        background: #1E1E2E;
-        border: 1px solid #DAA520;
-        color: #F5F5F5;
+        background: #E9EDF2;
+        color: #1F2A3E;
         padding: 10px 18px;
         border-radius: 24px 24px 6px 24px;
         max-width: 75%;
         font-size: 15px;
         line-height: 1.5;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+        border: 1px solid #E2E8F0;
     }
     
-    /* Assistant message – dark card */
+    /* Assistant message – white card with gold left border */
     .msg-bot {
         display: flex;
         gap: 12px;
-        margin: 24px 0;
+        margin: 22px 0;
         align-items: flex-start;
     }
     .bot-avatar {
         width: 38px;
         height: 38px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #DAA520, #B8860B);
+        background: linear-gradient(135deg, #E8D5A6, #DDBF7A);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 18px;
         flex-shrink: 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
     .msg-bot .bubble {
-        background: #1A1C23;
-        border: 1px solid #2C2F36;
-        border-left: 3px solid #DAA520;
-        padding: 14px 22px;
-        border-radius: 8px 20px 20px 20px;
+        background: #FFFFFF;
+        border: 1px solid #E6E9F0;
+        border-left: 4px solid #D4AF37;
+        padding: 16px 24px;
+        border-radius: 12px 24px 24px 24px;
         max-width: 85%;
         font-size: 15px;
         line-height: 1.65;
-        color: #E4E6EB;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        color: #1F2A44;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
     }
     
-    /* Welcome card */
+    /* Welcome box */
     .welcome-box {
         text-align: center;
-        padding: 50px 24px;
-        background: #1A1C23;
+        padding: 48px 28px;
+        background: white;
         border-radius: 32px;
-        border: 1px solid #2C2F36;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+        border: 1px solid #E9ECF2;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.02);
         margin: 20px 0;
     }
     .welcome-box h2 {
-        color: #DAA520;
-        font-size: 28px;
+        color: #2C3A4B;
+        font-size: 26px;
         font-weight: 600;
         margin-bottom: 12px;
     }
     .welcome-box p {
-        color: #A0A4B0;
+        color: #6B7A8E;
         font-size: 16px;
     }
     
-    /* Suggestions – gold buttons */
+    /* Suggestions buttons – soft gold outline */
     .stButton button {
         border-radius: 40px !important;
         font-weight: 500 !important;
-        background: #252A33 !important;
-        border: 1px solid #DAA520 !important;
-        color: #DAA520 !important;
+        background: white !important;
+        border: 1px solid #D4AF37 !important;
+        color: #8B6B2D !important;
         transition: all 0.2s;
+        font-size: 13px !important;
     }
     .stButton button:hover {
-        background: #DAA520 !important;
-        color: #0E1117 !important;
-        border-color: #DAA520 !important;
+        background: #FEF5E7 !important;
+        border-color: #C2A33A !important;
+        color: #5E4A1A !important;
     }
     
-    /* Input chat – gold border */
+    /* Input chat – modern */
     .stChatInput input {
-        background: #1A1C23 !important;
-        border: 1px solid #DAA520 !important;
-        border-radius: 30px !important;
-        color: white !important;
+        background: white !important;
+        border: 1px solid #D4AF37 !important;
+        border-radius: 32px !important;
+        padding: 12px 20px !important;
+        font-size: 15px !important;
+        color: #1F2A44 !important;
+    }
+    .stChatInput input:focus {
+        border-color: #C2A33A !important;
+        box-shadow: 0 0 0 2px rgba(212,175,55,0.2) !important;
     }
     
-    /* Thinking */
-    .thinking {
-        display: flex;
-        gap: 12px;
-        margin: 16px 0;
+    /* Dashboard container */
+    .dashboard-container {
+        margin: 24px 0 16px 48px;
+        background: #FCFAF5;
+        border-radius: 24px;
+        padding: 16px 20px;
+        border: 1px solid #EFE5CF;
     }
-    .thinking .bubble {
-        background: #1A1C23;
-        border: 1px solid #2C2F36;
-        padding: 10px 18px;
-        border-radius: 8px 20px 20px 20px;
+    .dashboard-title {
         font-size: 14px;
-        color: #DAA520;
-        font-style: italic;
+        font-weight: 600;
+        color: #8B6B2D;
+        margin-bottom: 14px;
+        letter-spacing: 0.5px;
     }
     
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #1A1C23; }
-    ::-webkit-scrollbar-thumb { background: #DAA520; border-radius: 4px; }
+    /* Tables inside assistant bubble */
+    table {
+        font-size: 13px;
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #ECECF0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -197,7 +210,7 @@ GITHUB_BASE_URL = "https://models.inference.ai.azure.com"
 GITHUB_MODEL    = "gpt-4o"
 
 # ══════════════════════════════════════════════════════
-# LOAD DATA (same as before)
+# LOAD DATA (cached)
 # ══════════════════════════════════════════════════════
 @st.cache_resource(show_spinner="Loading data...")
 def load_data():
@@ -227,7 +240,7 @@ def load_data():
 DATA = load_data()
 
 # ══════════════════════════════════════════════════════
-# ALL TOOLS & AGENT (identical to original – unchanged)
+# HELPERS + TOOLS (identical to original – no changes)
 # ══════════════════════════════════════════════════════
 METRIC_ALIASES = {
     "revenue":"Total Revenue","total revenue":"Total Revenue",
@@ -589,22 +602,75 @@ def run_agent(user_query: str, chat_history: list) -> str:
     return "Reached max steps."
 
 # ══════════════════════════════════════════════════════
-# STREAMLIT UI — Gold Dark Theme
+# SIMPLE DASHBOARD (without plotly)
+# ══════════════════════════════════════════════════════
+def show_dashboard(user_query: str):
+    """Display relevant KPIs based on query (no external charts)"""
+    q = user_query.lower()
+    df_all = DATA["opd_main_df"]
+    if df_all.empty:
+        return
+    
+    st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
+    st.markdown('<div class="dashboard-title">📊 QUICK INSIGHTS</div>', unsafe_allow_html=True)
+    
+    # Show summary metrics
+    total_rev = df_all["Total Revenue"].sum()
+    total_cases = df_all["No. Cases"].sum()
+    avg_pms = df_all["Doctor PMS %"].mean()
+    avg_noshow = df_all["No-Show %"].mean()
+    
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("💰 Total Revenue", f"{total_rev:,.0f}")
+    col2.metric("📋 Total Cases", f"{total_cases:,.0f}")
+    col3.metric("📊 Avg PMS %", f"{avg_pms:.1f}%")
+    col4.metric("⚠️ Avg No‑Show %", f"{avg_noshow:.1f}%")
+    
+    # If query mentions specific year
+    for y in DATA["years"]:
+        if str(y) in q:
+            df_yr = df_all[df_all["Year"] == y]
+            if not df_yr.empty:
+                st.caption(f"📅 Year {y} totals")
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Revenue", f"{df_yr['Total Revenue'].sum():,.0f}")
+                c2.metric("Cases", f"{df_yr['No. Cases'].sum():,.0f}")
+                c3.metric("PMS %", f"{df_yr['Doctor PMS %'].mean():.1f}%")
+            break
+    
+    # If query mentions a doctor
+    for doc in DATA["doctors"]:
+        if doc.lower() in q:
+            df_doc = df_all[df_all["Doctor Name"] == doc]
+            if not df_doc.empty:
+                st.caption(f"👨‍⚕️ Dr. {doc}")
+                d1, d2, d3 = st.columns(3)
+                d1.metric("Revenue", f"{df_doc['Total Revenue'].sum():,.0f}")
+                d2.metric("Cases", f"{df_doc['No. Cases'].sum():,.0f}")
+                d3.metric("Achievement %", f"{(df_doc['Total Revenue'].sum()/df_doc['Target Revenue'].sum()*100):.1f}%")
+            break
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════
+# STREAMLIT UI
 # ══════════════════════════════════════════════════════
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+if "last_query" not in st.session_state:
+    st.session_state.last_query = ""
 
 # Header
 st.markdown("""
 <div class="chat-header">
-    <div style="font-size:28px">✨</div>
+    <div style="font-size:28px">📋</div>
     <div>
         <h1>Andalusia OPD Analytics</h1>
-        <p>Gold‑edition AI Assistant | Real‑time KPI insights</p>
+        <p>Professional KPI Assistant · Soft Gold Edition</p>
     </div>
-    <div class="gold-badge">⚡ Agent Sphere</div>
+    <div class="gold-badge">✨ Agent Sphere</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -618,12 +684,11 @@ if not st.session_state.messages:
         <p>Ask about doctors, revenue, KPIs, or trends — I deliver instant answers.</p>
     </div>
     """, unsafe_allow_html=True)
-    
     cols = st.columns(2)
     suggestions = [
         "📈 Top doctor by revenue",
         "🏥 Compare all BUs in 2024",
-        "👨‍⚕️ Show all doctors KPIs",
+        "👨‍⚕️ Compare all doctors KPIs",
         "📅 Monthly revenue trend 2024",
         "🔍 Why is no-show % high?",
         "📊 Year summary for 2024",
@@ -634,8 +699,8 @@ if not st.session_state.messages:
                 st.session_state.pending_query = s.split(" ", 1)[1]
                 st.rerun()
 
-# Render chat history
-for msg in st.session_state.messages:
+# Render chat history + dashboard for last assistant message
+for idx, msg in enumerate(st.session_state.messages):
     if msg["role"] == "user":
         st.markdown(f"""
         <div class="msg-user">
@@ -647,15 +712,19 @@ for msg in st.session_state.messages:
             <div class="bot-avatar">🤖</div>
             <div class="bubble">{msg["content"]}</div>
         </div>""", unsafe_allow_html=True)
+        # Dashboard only for the most recent assistant response
+        if idx == len(st.session_state.messages) - 1 and msg["role"] == "assistant":
+            show_dashboard(st.session_state.last_query)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Input
+# Chat input
 user_input = st.chat_input("Ask about doctors, revenue, KPIs...")
 if "pending_query" in st.session_state:
     user_input = st.session_state.pop("pending_query")
 
 if user_input:
+    st.session_state.last_query = user_input
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.rerun()
 
