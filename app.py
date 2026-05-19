@@ -14,84 +14,98 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════════════
-# CUSTOM CSS — Chat UI
+# CUSTOM CSS — Gold/Beige Theme
 # ══════════════════════════════════════════════════════
 st.markdown("""
 <style>
-  /* Hide default Streamlit elements */
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Source+Sans+3:wght@300;400;500;600&display=swap');
+
   #MainMenu, footer, header { visibility: hidden; }
   .block-container { padding: 0 !important; max-width: 100% !important; }
 
-  /* App container */
-  .chat-wrapper {
-    max-width: 820px;
-    margin: 0 auto;
-    padding: 0 16px 100px 16px;
-    font-family: 'Segoe UI', sans-serif;
+  body, .stApp {
+    background: #F9F5ED !important;
+    font-family: 'Source Sans 3', sans-serif;
   }
 
-  /* Header */
+  /* ── Header ── */
   .chat-header {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: #185FA5;
-    color: white;
-    padding: 14px 24px;
+    background: linear-gradient(135deg, #2C1A0E 0%, #5C3A1E 100%);
+    color: #F5E6C8;
+    padding: 14px 28px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    border-radius: 0 0 16px 16px;
-    box-shadow: 0 2px 12px rgba(24,95,165,0.3);
+    gap: 14px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #C9A84C;
+    box-shadow: 0 3px 20px rgba(44,26,14,0.25);
   }
   .chat-header h1 {
     margin: 0;
-    font-size: 18px;
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
     font-weight: 600;
-    color: white;
+    color: #F5E6C8;
+    letter-spacing: 0.3px;
   }
   .chat-header p {
     margin: 0;
     font-size: 12px;
-    opacity: 0.8;
+    color: #C9A84C;
+    font-weight: 300;
+    letter-spacing: 0.5px;
   }
   .bu-badge {
-    background: rgba(255,255,255,0.2);
+    background: rgba(201,168,76,0.2);
+    border: 1px solid #C9A84C;
+    color: #F5E6C8;
     padding: 3px 10px;
     border-radius: 20px;
-    font-size: 12px;
-    margin-left: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
   }
 
-  /* User message */
+  /* ── Wrapper ── */
+  .chat-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 20px 120px 20px;
+  }
+
+  /* ── User bubble ── */
   .msg-user {
     display: flex;
     justify-content: flex-end;
-    margin: 10px 0;
+    margin: 12px 0;
   }
   .msg-user .bubble {
-    background: #185FA5;
-    color: white;
-    padding: 10px 16px;
-    border-radius: 18px 18px 4px 18px;
-    max-width: 70%;
+    background: #5C3A1E;
+    color: #F5E6C8;
+    padding: 11px 18px;
+    border-radius: 20px 20px 4px 20px;
+    max-width: 68%;
     font-size: 15px;
-    line-height: 1.5;
+    line-height: 1.55;
+    font-family: 'Source Sans 3', sans-serif;
   }
 
-  /* Assistant message */
+  /* ── Bot bubble ── */
   .msg-bot {
     display: flex;
-    gap: 10px;
-    margin: 10px 0;
+    gap: 12px;
+    margin: 12px 0;
     align-items: flex-start;
   }
   .bot-avatar {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    background: #E6F1FB;
+    background: #F0E0B0;
+    border: 1.5px solid #C9A84C;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -99,82 +113,185 @@ st.markdown("""
     flex-shrink: 0;
   }
   .msg-bot .bubble {
-    background: #F5F7FA;
-    border: 1px solid #E8ECF0;
-    padding: 14px 18px;
-    border-radius: 4px 18px 18px 18px;
-    max-width: 85%;
+    background: #FFFDF7;
+    border: 1px solid #E8D9B0;
+    padding: 16px 20px;
+    border-radius: 4px 20px 20px 20px;
+    max-width: 88%;
     font-size: 15px;
-    line-height: 1.7;
-    color: #1a1a2e;
+    line-height: 1.75;
+    color: #2C1A0E;
+    font-family: 'Source Sans 3', sans-serif;
+    box-shadow: 0 1px 6px rgba(92,58,30,0.06);
   }
 
-  /* KPI cards inside bot message */
+  /* ── KPI Cards grid (inside bot bubble) ── */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin: 12px 0;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin: 14px 0 8px;
   }
   .kpi-card {
-    background: white;
-    border: 1px solid #E8ECF0;
+    background: #FBF5E6;
+    border: 1px solid #E0C97A;
     border-radius: 10px;
-    padding: 10px 14px;
+    padding: 12px 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: #C9A84C;
+    border-radius: 2px 0 0 2px;
   }
   .kpi-label {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 2px;
+    font-size: 11px;
+    color: #8B6D3E;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    font-weight: 500;
   }
   .kpi-value {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
-    color: #185FA5;
+    color: #5C3A1E;
+    font-family: 'Playfair Display', serif;
   }
-  .kpi-value.green  { color: #0F6E56; }
-  .kpi-value.red    { color: #A32D2D; }
-  .kpi-value.orange { color: #BA7517; }
+  .kpi-value.green  { color: #2E6B3E; }
+  .kpi-value.red    { color: #8B1A1A; }
+  .kpi-value.orange { color: #8B5A00; }
+  .kpi-value.gold   { color: #8B6D00; }
+  .kpi-sub {
+    font-size: 11px;
+    color: #A08050;
+    margin-top: 2px;
+  }
 
-  /* Thinking indicator */
-  .thinking {
-    display: flex;
-    gap: 10px;
-    margin: 10px 0;
-    align-items: center;
-  }
-  .thinking .bubble {
-    background: #F5F7FA;
-    border: 1px solid #E8ECF0;
-    padding: 10px 16px;
-    border-radius: 4px 18px 18px 18px;
+  /* ── Section header inside bubble ── */
+  .section-title {
+    font-family: 'Playfair Display', serif;
     font-size: 14px;
-    color: #888;
+    font-weight: 600;
+    color: #5C3A1E;
+    border-bottom: 1px solid #E0C97A;
+    padding-bottom: 6px;
+    margin: 16px 0 10px;
+    letter-spacing: 0.3px;
   }
 
-  /* Suggested questions */
-  .suggestions {
+  /* ── Doctor row ── */
+  .doctor-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 16px 0 8px 42px;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid #F0E5C5;
   }
+  .rank-badge {
+    background: #5C3A1E;
+    color: #F5E6C8;
+    font-size: 11px;
+    font-weight: 600;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .rank-badge.gold { background: #C9A84C; color: #2C1A0E; }
+  .doctor-name { font-size: 14px; color: #2C1A0E; flex: 1; font-weight: 500; }
+  .ach-bar-wrap { flex: 1; height: 6px; background: #EDE0C0; border-radius: 3px; }
+  .ach-bar { height: 100%; border-radius: 3px; background: #C9A84C; }
+  .ach-pct { font-size: 13px; font-weight: 600; color: #5C3A1E; min-width: 44px; text-align: right; }
 
-  /* Welcome */
+  /* ── Status pill ── */
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+  }
+  .pill.green  { background: #D6F0DC; color: #1A5C2A; }
+  .pill.red    { background: #F5D5D5; color: #7A1A1A; }
+  .pill.orange { background: #FAEAC8; color: #7A5000; }
+
+  /* ── Welcome screen ── */
   .welcome-box {
     text-align: center;
-    padding: 40px 20px 20px;
-    color: #555;
+    padding: 48px 20px 28px;
+  }
+  .welcome-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
   }
   .welcome-box h2 {
-    color: #185FA5;
-    font-size: 22px;
+    font-family: 'Playfair Display', serif;
+    color: #2C1A0E;
+    font-size: 26px;
     margin-bottom: 8px;
+    font-weight: 600;
   }
   .welcome-box p {
     font-size: 15px;
-    color: #888;
-    margin-bottom: 24px;
+    color: #8B6D3E;
+    margin-bottom: 0;
+    font-weight: 300;
+  }
+
+  /* ── Suggestion buttons ── */
+  .stButton > button {
+    background: #FFFDF7 !important;
+    border: 1px solid #D4B96A !important;
+    color: #5C3A1E !important;
+    border-radius: 10px !important;
+    font-size: 13px !important;
+    font-family: 'Source Sans 3', sans-serif !important;
+    padding: 10px 14px !important;
+    transition: all 0.2s ease !important;
+    text-align: left !important;
+    font-weight: 400 !important;
+  }
+  .stButton > button:hover {
+    background: #F5E6C8 !important;
+    border-color: #C9A84C !important;
+    color: #2C1A0E !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(92,58,30,0.12) !important;
+  }
+
+  /* ── Chat input ── */
+  .stChatInput textarea, .stChatInput input {
+    background: #FFFDF7 !important;
+    border: 1.5px solid #D4B96A !important;
+    border-radius: 12px !important;
+    color: #2C1A0E !important;
+    font-family: 'Source Sans 3', sans-serif !important;
+  }
+  .stChatInput textarea:focus, .stChatInput input:focus {
+    border-color: #C9A84C !important;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.15) !important;
+  }
+
+  /* ── Spinner ── */
+  .stSpinner > div { border-top-color: #C9A84C !important; }
+
+  /* ── Code / preformatted inside bubble ── */
+  .msg-bot .bubble pre, .msg-bot .bubble code {
+    background: #F5EDD5;
+    border: 1px solid #E0C97A;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #3A2000;
+    padding: 2px 6px;
   }
 </style>
 """, unsafe_allow_html=True)
@@ -221,7 +338,486 @@ def load_data():
 DATA = load_data()
 
 # ══════════════════════════════════════════════════════
-# HELPERS + TOOLS  (same as before)
+# RICH HTML RENDERER
+# Converts raw text output → styled HTML with KPI cards
+# ══════════════════════════════════════════════════════
+def _pct_color(label: str, val_str: str) -> str:
+    """Return CSS class based on KPI direction."""
+    try:
+        v = float(val_str.replace("%","").replace(",",""))
+    except:
+        return ""
+    low_is_good = any(x in label.lower() for x in ["no-show","leakage","cancel","missed"])
+    if low_is_good:
+        if v < 10: return "green"
+        if v < 20: return "orange"
+        return "red"
+    else:
+        if v >= 100: return "green"
+        if v >= 80:  return "orange"
+        return "red"
+
+def _ach_color(ach: float) -> str:
+    if ach >= 100: return "green"
+    if ach >= 80:  return "orange"
+    return "red"
+
+def render_response(text: str) -> str:
+    """
+    Parse structured text output and convert to rich HTML.
+    Detects:
+      - DOCTOR REPORT → KPI cards + ranking rows
+      - YEAR SUMMARY → KPI cards
+      - RANKING → doctor rows with bars
+      - ALL DOCTORS → table-style comparison
+      - MONTHLY TREND → formatted month list
+      - BU COMPARISON → cards per BU
+      - Plain text → lightly formatted
+    """
+    lines = text.strip().split("\n")
+    if not lines:
+        return f'<span>{text}</span>'
+
+    header = lines[0].upper()
+
+    # ── DOCTOR REPORT ──────────────────────────────────────
+    if "DOCTOR REPORT" in header:
+        return _render_doctor_report(lines)
+
+    # ── YEAR SUMMARY ───────────────────────────────────────
+    if "YEAR SUMMARY" in header:
+        return _render_year_summary(lines)
+
+    # ── RANKING ────────────────────────────────────────────
+    if header.startswith("RANKING:"):
+        return _render_ranking(lines)
+
+    # ── ALL DOCTORS ────────────────────────────────────────
+    if "ALL DOCTORS" in header:
+        return _render_all_doctors(lines)
+
+    # ── MONTHLY TREND ──────────────────────────────────────
+    if "MONTHLY TREND" in header:
+        return _render_monthly(lines)
+
+    # ── BU COMPARISON ──────────────────────────────────────
+    if "BU COMPARISON" in header:
+        return _render_bu(lines)
+
+    # ── ROOT CAUSE ─────────────────────────────────────────
+    if "ROOT CAUSE" in header:
+        return _render_generic_with_cards(lines)
+
+    # ── Fallback: nicely formatted text ───────────────────
+    return _render_plain(lines)
+
+
+def _kpi_card(label: str, value: str, sub: str = "", color_class: str = "") -> str:
+    return f"""
+    <div class="kpi-card">
+      <div class="kpi-label">{label}</div>
+      <div class="kpi-value {color_class}">{value}</div>
+      {f'<div class="kpi-sub">{sub}</div>' if sub else ''}
+    </div>"""
+
+def _section(title: str) -> str:
+    return f'<div class="section-title">{title}</div>'
+
+def _pill(text: str, color: str) -> str:
+    return f'<span class="pill {color}">{text}</span>'
+
+def _parse_kv(line: str):
+    """Extract label: value pairs from indented lines like '  Target      : 1,234,567'"""
+    m = re.match(r'\s+(.+?)\s*:\s*(.+)', line)
+    if m:
+        return m.group(1).strip(), m.group(2).strip()
+    return None, None
+
+def _render_doctor_report(lines: list) -> str:
+    html = []
+    # Title
+    title_line = lines[0].replace("DOCTOR REPORT:", "").strip()
+    html.append(f'<div style="font-family:\'Playfair Display\',serif;font-size:17px;font-weight:600;color:#2C1A0E;margin-bottom:4px">{title_line}</div>')
+
+    section = None
+    rev_cards = []
+    cas_cards = []
+    kpi_cards = []
+    other_cards = []
+    ranking_rows = []
+    in_ranking = False
+
+    for line in lines[2:]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("="): continue
+
+        # Section headers
+        if re.match(r'^(REVENUE|CASES|QUALITY KPIs|OTHER|OVERALL RANKING|ALL DOCTORS RANKING)', stripped):
+            section = stripped.split(":")[0].strip()
+            in_ranking = section == "ALL DOCTORS RANKING"
+            continue
+
+        if in_ranking:
+            # Lines like: #  1  Dr. Name    85.3%  ← THIS DOCTOR
+            m = re.match(r'#\s*(\d+)\s+Dr\.\s+(.+?)\s+([\d.]+%)(.*)', stripped)
+            if m:
+                rank, name, pct, marker = m.group(1), m.group(2).strip(), m.group(3), m.group(4)
+                is_this = "THIS DOCTOR" in marker
+                try: ach = float(pct.replace("%",""))
+                except: ach = 0
+                bar_w = min(100, ach)
+                row_style = "background:#FFF8E8;border-radius:6px;padding:4px 6px;" if is_this else ""
+                rank_cls = "gold" if rank == "1" else ""
+                ranking_rows.append(f"""
+                <div class="doctor-row" style="{row_style}">
+                  <div class="rank-badge {rank_cls}">#{rank}</div>
+                  <div class="doctor-name">Dr. {name}{'&nbsp;★' if is_this else ''}</div>
+                  <div class="ach-bar-wrap"><div class="ach-bar" style="width:{bar_w}%"></div></div>
+                  <div class="ach-pct">{pct}</div>
+                </div>""")
+            continue
+
+        label, val = _parse_kv(line)
+        if not label: continue
+
+        # Classify into cards
+        if section == "REVENUE":
+            color = ""
+            if label == "Achievement":
+                try: ach = float(val.replace("%","").replace("✅","").replace("⚠️","").replace("❌","").strip())
+                except: ach = 0
+                color = _ach_color(ach)
+                val = val.replace("✅","").replace("⚠️","").replace("❌","").strip()
+            rev_cards.append(_kpi_card(f"Revenue {label}", val, "", color))
+
+        elif section == "CASES":
+            color = ""
+            if label == "Achievement":
+                try: ach = float(val.replace("%","").replace("✅","").replace("⚠️","").replace("❌","").strip())
+                except: ach = 0
+                color = _ach_color(ach)
+                val = val.replace("✅","").replace("⚠️","").replace("❌","").strip()
+            cas_cards.append(_kpi_card(f"Cases {label}", val, "", color))
+
+        elif section == "QUALITY KPIs":
+            val_clean = val.replace("✅","").replace("⚠️","").replace("❌","").strip()
+            color = _pct_color(label, val_clean)
+            kpi_cards.append(_kpi_card(label, val_clean, "", color))
+
+        elif section == "OTHER":
+            other_cards.append(_kpi_card(label, val))
+
+        elif section and "RANKING" in section:
+            pass  # handled above
+
+    # Assemble
+    if rev_cards:
+        html.append(_section("💰 Revenue"))
+        html.append(f'<div class="kpi-grid">{"".join(rev_cards)}</div>')
+    if cas_cards:
+        html.append(_section("🏥 Cases"))
+        html.append(f'<div class="kpi-grid">{"".join(cas_cards)}</div>')
+    if kpi_cards:
+        html.append(_section("📊 Quality KPIs"))
+        html.append(f'<div class="kpi-grid">{"".join(kpi_cards)}</div>')
+    if other_cards:
+        html.append(_section("📋 Other Metrics"))
+        html.append(f'<div class="kpi-grid">{"".join(other_cards)}</div>')
+    if ranking_rows:
+        html.append(_section("🏆 All Doctors Ranking"))
+        html.append("".join(ranking_rows))
+
+    return "".join(html)
+
+
+def _render_year_summary(lines: list) -> str:
+    html = []
+    title_line = lines[0].replace("YEAR SUMMARY:", "").strip()
+    html.append(f'<div style="font-family:\'Playfair Display\',serif;font-size:17px;font-weight:600;color:#2C1A0E;margin-bottom:4px">{title_line}</div>')
+
+    section = None
+    rev_cards = []
+    cas_cards = []
+    kpi_cards = []
+    ranking_rows = []
+    doc_info = []
+    in_ranking = False
+
+    for line in lines[2:]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("="): continue
+
+        if re.match(r'^(REVENUE|CASES|AVERAGE KPIs|DOCTORS|RANKING)', stripped):
+            section = stripped.split(":")[0].strip()
+            in_ranking = section == "RANKING"
+            continue
+
+        if in_ranking:
+            m = re.match(r'Dr\.\s+(.+?)\s+([\d.]+%)', stripped)
+            if m:
+                name, pct = m.group(1).strip(), m.group(2)
+                try: ach = float(pct.replace("%",""))
+                except: ach = 0
+                bar_w = min(100, ach)
+                ranking_rows.append(f"""
+                <div class="doctor-row">
+                  <div class="doctor-name">Dr. {name}</div>
+                  <div class="ach-bar-wrap"><div class="ach-bar" style="width:{bar_w}%"></div></div>
+                  <div class="ach-pct">{pct}</div>
+                </div>""")
+            continue
+
+        label, val = _parse_kv(line)
+        if not label: continue
+
+        if section == "REVENUE":
+            color = ""
+            if label == "Achievement":
+                try: ach = float(val.replace("%","").replace("✅","").replace("⚠️","").replace("❌","").strip())
+                except: ach = 0
+                color = _ach_color(ach)
+                val = val.replace("✅","").replace("⚠️","").replace("❌","").strip()
+            rev_cards.append(_kpi_card(f"Revenue {label}", val, "", color))
+        elif section == "CASES":
+            color = ""
+            if label == "Achievement":
+                try: ach = float(val.replace("%","").replace("✅","").replace("⚠️","").replace("❌","").strip())
+                except: ach = 0
+                color = _ach_color(ach)
+                val = val.replace("✅","").replace("⚠️","").replace("❌","").strip()
+            cas_cards.append(_kpi_card(f"Cases {label}", val, "", color))
+        elif section == "AVERAGE KPIs":
+            val_clean = val.strip()
+            color = _pct_color(label, val_clean)
+            kpi_cards.append(_kpi_card(label, val_clean, "", color))
+        elif section == "DOCTORS":
+            doc_info.append(f'<div style="font-size:14px;color:#5C3A1E;padding:4px 0">{"🥇" if "Top" in label else "🔻"} <b>{label}:</b> {val}</div>')
+
+    if rev_cards:
+        html.append(_section("💰 Revenue"))
+        html.append(f'<div class="kpi-grid">{"".join(rev_cards)}</div>')
+    if cas_cards:
+        html.append(_section("🏥 Cases"))
+        html.append(f'<div class="kpi-grid">{"".join(cas_cards)}</div>')
+    if kpi_cards:
+        html.append(_section("📊 Average KPIs"))
+        html.append(f'<div class="kpi-grid">{"".join(kpi_cards)}</div>')
+    if doc_info:
+        html.append(_section("👨‍⚕️ Doctors"))
+        html.append("".join(doc_info))
+    if ranking_rows:
+        html.append(_section("🏆 Ranking"))
+        html.append("".join(ranking_rows))
+
+    return "".join(html)
+
+
+def _render_ranking(lines: list) -> str:
+    html = []
+    title = lines[0].replace("RANKING:", "").strip()
+    html.append(f'<div style="font-family:\'Playfair Display\',serif;font-size:16px;font-weight:600;color:#2C1A0E;margin-bottom:12px">🏆 {title}</div>')
+
+    for line in lines[2:]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("="): continue
+        m = re.match(r'#\s*(\d+)\s+Dr\.\s+(.+?)\s+([\S,%.]+)\s*$', stripped)
+        if m:
+            rank, name, val = m.group(1), m.group(2).strip(), m.group(3)
+            try:
+                num = float(val.replace("%","").replace(",",""))
+                bar_pct = min(100, (num / 100)) if "%" not in val else min(100, num)
+            except:
+                bar_pct = 50
+            rank_cls = "gold" if rank == "1" else ""
+            html.append(f"""
+            <div class="doctor-row">
+              <div class="rank-badge {rank_cls}">#{rank}</div>
+              <div class="doctor-name">Dr. {name}</div>
+              <div class="ach-bar-wrap"><div class="ach-bar" style="width:{bar_pct}%"></div></div>
+              <div class="ach-pct">{val}</div>
+            </div>""")
+
+    return "".join(html)
+
+
+def _render_all_doctors(lines: list) -> str:
+    html = []
+    title = lines[0].strip()
+    html.append(f'<div style="font-family:\'Playfair Display\',serif;font-size:16px;font-weight:600;color:#2C1A0E;margin-bottom:12px">👨‍⚕️ {title}</div>')
+
+    # Table header + rows
+    table_rows = []
+    header_row = None
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("="): continue
+        if stripped.startswith("Doctor"):
+            # Header
+            cols = stripped.split()
+            header_row = cols
+            continue
+        if stripped.startswith("-"): continue
+        if re.match(r'\w', stripped) and stripped != lines[0].strip():
+            # Data row: Name RevAch% CasAch% PMS% NoShow% Leak% XRef% Ret%
+            parts = stripped.split()
+            if len(parts) >= 5:
+                table_rows.append(parts)
+
+    if table_rows:
+        headers = ["Doctor","RevAch%","CasAch%","PMS%","NoShow%","Leak%","XRef%","Ret%"]
+        th_style = "padding:7px 10px;font-size:11px;color:#8B6D3E;text-transform:uppercase;letter-spacing:0.4px;font-weight:600;border-bottom:2px solid #E0C97A;white-space:nowrap"
+        td_style = "padding:7px 10px;font-size:13px;color:#2C1A0E;border-bottom:1px solid #F0E5C5"
+
+        thead = f'<tr>{"".join(f"<th style=\"{th_style}\">{h}</th>" for h in headers)}</tr>'
+        tbody_rows = []
+        for parts in table_rows:
+            cells = f'<td style="{td_style};font-weight:500">{parts[0]}</td>'
+            for p in parts[1:8]:
+                try: v = float(p.replace("%",""))
+                except: v = 0
+                color = "#2E6B3E" if v >= 100 else "#8B5A00" if v >= 80 else "#8B1A1A"
+                cells += f'<td style="{td_style};color:{color};font-weight:500">{p}</td>'
+            tbody_rows.append(f"<tr>{cells}</tr>")
+
+        html.append(f'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:#FFFDF7;border-radius:10px;overflow:hidden"><thead style="background:#FBF5E6">{thead}</thead><tbody>{"".join(tbody_rows)}</tbody></table></div>')
+    else:
+        html.append(_render_plain(lines[1:]))
+
+    return "".join(html)
+
+
+def _render_monthly(lines: list) -> str:
+    html = []
+    title = lines[0].replace("MONTHLY TREND:", "").strip()
+    html.append(f'<div style="font-family:\'Playfair Display\',serif;font-size:16px;font-weight:600;color:#2C1A0E;margin-bottom:12px">📅 {title}</div>')
+
+    year_block = []
+    current_year = None
+
+    for line in lines[2:]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("="): continue
+        # Year header
+        m_yr = re.match(r'── (\d{4}) ──', stripped)
+        if m_yr:
+            if year_block and current_year:
+                html.append(_month_block(current_year, year_block))
+                year_block = []
+            current_year = m_yr.group(1)
+            continue
+        year_block.append(stripped)
+
+    if year_block and current_year:
+        html.append(_month_block(current_year, year_block))
+
+    return "".join(html)
+
+
+def _month_block(year: str, lines: list) -> str:
+    html = [f'<div style="font-size:13px;font-weight:600;color:#8B6D3E;text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 6px">{year}</div>']
+    cards = []
+    summary = []
+    for line in lines:
+        # Month row: Jan  1,234,567
+        m = re.match(r'([A-Za-z]{3,4})\s+([\d,%.]+)', line)
+        if m:
+            mon, val = m.group(1), m.group(2)
+            cards.append(f'<div class="kpi-card"><div class="kpi-label">{mon}</div><div class="kpi-value" style="font-size:14px">{val}</div></div>')
+        elif line.startswith("Avg") or line.startswith("Best") or line.startswith("Low"):
+            label, val = line.split(":")[0].strip(), line.split(":",1)[1].strip() if ":" in line else ""
+            icon = "📈" if "Best" in label else "📉" if "Low" in label else "≈"
+            summary.append(f'<span style="font-size:13px;color:#8B6D3E;margin-right:16px">{icon} <b>{label}:</b> {val}</span>')
+
+    if cards:
+        html.append(f'<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(80px,1fr))">{"".join(cards)}</div>')
+    if summary:
+        html.append(f'<div style="margin-top:8px;padding:8px 0">{"".join(summary)}</div>')
+
+    return "".join(html)
+
+
+def _render_bu(lines: list) -> str:
+    html = []
+    title = lines[0].replace("BU COMPARISON:", "").strip()
+    html.append(f'<div style="font-family:\'Playfair Display\',serif;font-size:16px;font-weight:600;color:#2C1A0E;margin-bottom:12px">🏥 {title}</div>')
+
+    cards = []
+    for line in lines[2:]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("="): continue
+        label, val = _parse_kv(line)
+        if label:
+            pct_m = re.search(r'\((.+?)\)', val)
+            sub = pct_m.group(1) if pct_m else ""
+            val_clean = val.split("(")[0].strip()
+            cards.append(_kpi_card(label, val_clean, sub))
+
+    if cards:
+        html.append(f'<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">{"".join(cards)}</div>')
+
+    return "".join(html)
+
+
+def _render_generic_with_cards(lines: list) -> str:
+    html = []
+    title = lines[0].strip()
+    html.append(f'<div style="font-family:\'Playfair Display\',serif;font-size:16px;font-weight:600;color:#2C1A0E;margin-bottom:10px">{title}</div>')
+    cards = []
+    other = []
+    for line in lines[2:]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("="): continue
+        label, val = _parse_kv(line)
+        if label and val:
+            color = _pct_color(label, val)
+            cards.append(_kpi_card(label, val, "", color))
+        else:
+            other.append(f'<div style="font-size:14px;color:#5C3A1E;line-height:1.7">{stripped}</div>')
+
+    if cards:
+        html.append(f'<div class="kpi-grid">{"".join(cards)}</div>')
+    if other:
+        html.append("".join(other))
+    return "".join(html)
+
+
+def _render_plain(lines) -> str:
+    """Lightly format plain text — convert key:value lines to small cards, rest as prose."""
+    html = []
+    cards = []
+    prose = []
+
+    for line in lines:
+        if not line.strip(): continue
+        label, val = _parse_kv(line)
+        if label and val:
+            color = _pct_color(label, val)
+            cards.append(_kpi_card(label, val, "", color))
+        else:
+            if cards:
+                html.append(f'<div class="kpi-grid">{"".join(cards)}</div>')
+                cards = []
+            clean = line.strip().replace("=","").strip()
+            if clean:
+                if re.match(r'^[A-Z][A-Z\s]+:?$', clean):
+                    if prose:
+                        html.append(f'<p style="font-size:15px;color:#2C1A0E;line-height:1.7;margin:0 0 8px">{"".join(prose)}</p>')
+                        prose = []
+                    html.append(_section(clean.rstrip(":")))
+                else:
+                    prose.append(f'{clean} ')
+
+    if cards:
+        html.append(f'<div class="kpi-grid">{"".join(cards)}</div>')
+    if prose:
+        html.append(f'<p style="font-size:15px;color:#2C1A0E;line-height:1.7;margin:0">{" ".join(prose)}</p>')
+
+    return "".join(html) if html else f'<p style="font-size:15px;color:#2C1A0E;line-height:1.7">{" ".join(l.strip() for l in lines if l.strip())}</p>'
+
+
+# ══════════════════════════════════════════════════════
+# HELPERS + TOOLS  (unchanged logic)
 # ══════════════════════════════════════════════════════
 METRIC_ALIASES = {
     "revenue":"Total Revenue","total revenue":"Total Revenue",
@@ -310,19 +906,19 @@ def get_doctor_performance(doctor_name: str, year: str = "all") -> str:
         f"REVENUE",
         f"  Target      : {t_rev:>18,.0f}",
         f"  Actual      : {a_rev:>18,.0f}",
-        f"  Achievement : {rev_ach:>17.1f}%  {'✅' if rev_ach>=100 else '⚠️' if rev_ach>=80 else '❌'}",
+        f"  Achievement : {rev_ach:>17.1f}%",
         f"  Gap         : {a_rev-t_rev:>18,.0f}",
         f"CASES",
         f"  Target      : {t_cas:>18,.0f}",
         f"  Actual      : {a_cas:>18,.0f}",
-        f"  Achievement : {cas_ach:>17.1f}%  {'✅' if cas_ach>=100 else '⚠️' if cas_ach>=80 else '❌'}",
+        f"  Achievement : {cas_ach:>17.1f}%",
         f"  Charge/Case : {cpc:>18,.1f}",
         f"QUALITY KPIs",
-        f"  PMS %          : {pms:>6.1f}%  {'✅' if pms>=80 else '⚠️' if pms>=60 else '❌'}",
-        f"  No-Show %      : {ns:>6.1f}%  {'✅' if ns<10 else '⚠️' if ns<20 else '❌'}",
-        f"  Leakage %      : {lk:>6.1f}%  {'✅' if lk<5 else '⚠️' if lk<8 else '❌'}",
-        f"  Cross Referral : {xcr:>6.1f}%  {'✅' if xcr>=15 else '⚠️' if xcr>=10 else '❌'}",
-        f"  Retention %    : {ret:>6.1f}%  {'✅' if ret>=70 else '⚠️' if ret>=50 else '❌'}",
+        f"  PMS %          : {pms:>6.1f}%",
+        f"  No-Show %      : {ns:>6.1f}%",
+        f"  Leakage %      : {lk:>6.1f}%",
+        f"  Cross Referral : {xcr:>6.1f}%",
+        f"  Retention %    : {ret:>6.1f}%",
         f"OTHER",
         f"  Cancelled Clinics   : {cancelled:>8,.0f}",
         f"  Leakage Rev Losses  : {leakage_rev:>8,.0f}",
@@ -402,9 +998,9 @@ def compare_business_units(metric: str, year: str, month: int = None) -> str:
     out = [f"BU COMPARISON: {col} | Year:{year}", "="*50]
     for _, r in res.iterrows():
         pct = f"  ({r[col]/total*100:.1f}% of total)" if total else ""
-        out.append(f"  {r['BU']:<5}  {_fmt(r[col], col)}{pct}")
+        out.append(f"  {r['BU']:<5}  : {_fmt(r[col], col)}{pct}")
     if total and len(res) > 1:
-        out.append(f"  {'TOTAL':<5}  {total:,.0f}")
+        out.append(f"  {'TOTAL':<5}  : {total:,.0f}")
     return "\n".join(out)
 
 def get_year_summary(year: str, bu: str = "all") -> str:
@@ -423,12 +1019,12 @@ def get_year_summary(year: str, bu: str = "all") -> str:
         f"REVENUE",
         f"  Target      : {t_rev:>18,.0f}",
         f"  Actual      : {a_rev:>18,.0f}",
-        f"  Achievement : {rev_ach:>17.1f}%  {'✅' if rev_ach>=100 else '⚠️' if rev_ach>=80 else '❌'}",
+        f"  Achievement : {rev_ach:>17.1f}%",
         f"  Gap         : {a_rev-t_rev:>18,.0f}",
         f"CASES",
         f"  Target      : {t_cas:>18,.0f}",
         f"  Actual      : {a_cas:>18,.0f}",
-        f"  Achievement : {cas_ach:>17.1f}%  {'✅' if cas_ach>=100 else '⚠️' if cas_ach>=80 else '❌'}",
+        f"  Achievement : {cas_ach:>17.1f}%",
         f"AVERAGE KPIs",
         f"  PMS %          : {df['Doctor PMS %'].mean():.1f}%",
         f"  No-Show %      : {df['No-Show %'].mean():.1f}%",
@@ -441,7 +1037,7 @@ def get_year_summary(year: str, bu: str = "all") -> str:
         "RANKING:",
     ]
     for _, r in doc_rev.iterrows():
-        out.append(f"  Dr. {r['Doctor Name']:<12}  {r['Ach']:>5.1f}%")
+        out.append(f"Dr. {r['Doctor Name']:<12}  {r['Ach']:>5.1f}%")
     return "\n".join(out)
 
 def get_root_causes_analysis(kpi_name: str, bu: str = "all", year: str = "all") -> str:
@@ -450,7 +1046,7 @@ def get_root_causes_analysis(kpi_name: str, bu: str = "all", year: str = "all") 
     out = [f"ROOT CAUSE ANALYSIS: {kpi_name} | BU:{bu} | Year:{year}", "="*55]
     if col in df.columns:
         val = df[col].mean() if "%" in col else df[col].sum()
-        out.append(f"Current value: {_fmt(val, col)}")
+        out.append(f"  Current value : {_fmt(val, col)}")
         by_doc = df.groupby("Doctor Name")[col].agg("mean" if "%" in col else "sum").sort_values(ascending=False)
         out.append("By Doctor:")
         for doc, v in by_doc.items(): out.append(f"  Dr. {doc:<12}  {_fmt(v, col)}")
@@ -511,7 +1107,8 @@ CRITICAL RULES:
 4. Be concise — give exact numbers. Do NOT hallucinate.
 5. Format your answers clearly with sections and bullet points when presenting data.
 6. Use EXACT column names: "Total Revenue", "No. Cases", "No-Show %", "Service Leakage %", "Doctor PMS %", "Patient Retention %", "Cross Referral %".
-7. Do not call more than 3 tools per request."""
+7. Do not call more than 3 tools per request.
+8. Return the raw tool output directly without modifying it — the UI will render it."""
 
 # ══════════════════════════════════════════════════════
 # AGENT CALL
@@ -558,29 +1155,39 @@ def run_agent(user_query: str, chat_history: list) -> str:
     for role, content in chat_history[-4:]:
         messages.append({"role": role, "content": content})
     messages.append({"role": "user", "content": user_query})
+
+    last_tool_output = ""
+
     for _ in range(6):
         resp       = call_github(messages)
         msg        = resp.get("message", {})
         tool_calls = msg.get("tool_calls", [])
         if not tool_calls:
-            return msg.get("content", "No response.")
+            # If model produced final text AND we have a tool output, prefer tool output
+            final_text = msg.get("content", "No response.")
+            return last_tool_output if last_tool_output else final_text
+
         assistant_msg = {"role": "assistant", "content": msg.get("content") or ""}
         assistant_msg["tool_calls"] = [
             {"id": tc.get("id", f"call_{i}"), "type": "function", "function": tc["function"]}
             for i, tc in enumerate(tool_calls)
         ]
         messages.append(assistant_msg)
+
         seen = set()
         for idx, tc in enumerate(tool_calls):
             key = (tc.get("function",{}).get("name",""),
                    json.dumps(tc.get("function",{}).get("arguments",{}), sort_keys=True))
             result = "Already executed." if key in seen else execute_tool(tc)
-            if key not in seen: seen.add(key)
+            if key not in seen:
+                seen.add(key)
+                last_tool_output = result  # store last real tool result
             messages.append({"role": "tool", "tool_call_id": tc.get("id","call_0"),
                               "name": tc.get("function",{}).get("name","tool"),
                               "content": result[:3000]})
             if idx < len(tool_calls) - 1: time.sleep(1)
-    return "Reached max steps."
+
+    return last_tool_output or "Reached max steps."
 
 # ══════════════════════════════════════════════════════
 # STREAMLIT UI
@@ -593,12 +1200,12 @@ if "chat_history" not in st.session_state:
 # Header
 st.markdown("""
 <div class="chat-header">
-  <div style="font-size:28px">📊</div>
+  <div style="font-size:26px">🏥</div>
   <div>
     <h1>Andalusia OPD Analytics</h1>
-    <p>AI-powered KPI Assistant</p>
+    <p>AI-powered KPI Intelligence Dashboard</p>
   </div>
-  <div style="margin-left:auto">
+  <div style="margin-left:auto;display:flex;gap:6px">
     <span class="bu-badge">ASH</span>
     <span class="bu-badge">SMH</span>
     <span class="bu-badge">HJH</span>
@@ -612,24 +1219,25 @@ st.markdown('<div class="chat-wrapper">', unsafe_allow_html=True)
 if not st.session_state.messages:
     st.markdown("""
     <div class="welcome-box">
-      <h2>Welcome to OPD Analytics 👋</h2>
-      <p>Ask me anything about doctors, revenue, KPIs, or performance trends.</p>
+      <div class="welcome-icon">📊</div>
+      <h2>Welcome to OPD Analytics</h2>
+      <p>Ask me anything about doctors, revenue, KPIs, or performance trends across all business units.</p>
     </div>
     """, unsafe_allow_html=True)
 
     cols = st.columns(2)
     suggestions = [
-        "📈 Top doctor by revenue",
-        "🏥 Compare all BUs in 2024",
-        "👨‍⚕️ Show all doctors KPIs",
-        "📅 Monthly revenue trend 2024",
-        "🔍 Why is no-show % high?",
-        "📊 Year summary for 2024",
+        ("📈", "Top doctor by revenue"),
+        ("🏥", "Compare all BUs in 2024"),
+        ("👨‍⚕️", "Show all doctors KPIs"),
+        ("📅", "Monthly revenue trend 2024"),
+        ("🔍", "Why is no-show % high?"),
+        ("📊", "Year summary for 2024"),
     ]
-    for i, s in enumerate(suggestions):
+    for i, (icon, label) in enumerate(suggestions):
         with cols[i % 2]:
-            if st.button(s, use_container_width=True, key=f"sug_{i}"):
-                st.session_state.pending_query = s.split(" ", 1)[1]
+            if st.button(f"{icon} {label}", use_container_width=True, key=f"sug_{i}"):
+                st.session_state.pending_query = label
                 st.rerun()
 
 # Render chat history
@@ -640,10 +1248,11 @@ for msg in st.session_state.messages:
           <div class="bubble">{msg["content"]}</div>
         </div>""", unsafe_allow_html=True)
     else:
+        rendered = render_response(msg["content"])
         st.markdown(f"""
         <div class="msg-bot">
-          <div class="bot-avatar">🤖</div>
-          <div class="bubble">{msg["content"]}</div>
+          <div class="bot-avatar">✦</div>
+          <div class="bubble">{rendered}</div>
         </div>""", unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
@@ -651,7 +1260,6 @@ st.markdown('</div>', unsafe_allow_html=True)
 # Input bar
 user_input = st.chat_input("Ask about doctors, revenue, KPIs...")
 
-# Handle suggestion click
 if "pending_query" in st.session_state:
     user_input = st.session_state.pop("pending_query")
 
@@ -659,7 +1267,6 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.rerun()
 
-# Generate response if last message is from user
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     last_query = st.session_state.messages[-1]["content"]
     with st.spinner("Analyzing data..."):
