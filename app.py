@@ -760,25 +760,136 @@ def _render_bu(lines: list) -> str:
 
 
 def _render_generic_with_cards(lines: list) -> str:
+    """ROOT CAUSE ANALYSIS renderer — handles Current value, By Doctor, By BU, Knowledge Base."""
     html = []
     title = lines[0].strip()
-    html.append(f'<div style="font-family:\'Playfair Display\',serif;font-size:16px;font-weight:600;color:#2C1A0E;margin-bottom:10px">{title}</div>')
-    cards = []
-    other = []
-    for line in lines[2:]:
+    # Extract KPI name from title
+    kpi_name = title.replace("ROOT CAUSE ANALYSIS:","").split("|")[0].strip()
+    html.append(f'<div style="font-family:\'Playfair Display\',serif;font-size:16px;font-weight:600;color:#2C1A0E;margin-bottom:12px">🔍 Root Cause Analysis — {kpi_name}</div>')
+
+    section = None
+    current_val = None
+    doc_rows = []
+    bu_rows  = []
+    kb_lines = []
+
+    for line in lines[1:]:
         stripped = line.strip()
         if not stripped or stripped.startswith("="): continue
-        label, val = _parse_kv(line)
-        if label and val:
-            color = _pct_color(label, val)
-            cards.append(_kpi_card(label, val, "", color))
-        else:
-            other.append(f'<div style="font-size:14px;color:#5C3A1E;line-height:1.7">{stripped}</div>')
 
-    if cards:
-        html.append(f'<div class="kpi-grid">{"".join(cards)}</div>')
-    if other:
-        html.append("".join(other))
+        # Detect section headers
+        if re.match(r'^By Doctor:', stripped):
+            section = "doctor"; continue
+        if re.match(r'^By BU:', stripped):
+            section = "bu"; continue
+        if re.match(r'^Knowledge Base:', stripped):
+            section = "kb"; continue
+
+        # Current value line
+        m_cur = re.match(r'Current value\s*[:：]\s*(.+)', stripped)
+        if m_cur:
+            current_val = m_cur.group(1).strip()
+            section = None
+            continue
+
+        if section == "doctor":
+            # "Dr. Khaled 12.1%"  or  "Dr. Khaled  :  12.1%"
+            m = re.match(r'Dr\.\s+(.+?)\s+([\d.]+%)', stripped)
+            if m:
+                doc_rows.append((m.group(1).strip(), m.group(2)))
+
+        elif section == "bu":
+            # "  SMH  11.6%"
+            m = re.match(r'([A-Z]{2,5})\s+([\d.]+%)', stripped)
+            if m:
+                bu_rows.append((m.group(1), m.group(2)))
+
+        elif section == "kb":
+            kb_lines.append(stripped)
+
+    # ── Current Value card ──
+    if current_val:
+        color = _pct_color(kpi_name, current_val)
+        html.append(f'<div class="kpi-grid" style="grid-template-columns:1fr">{_kpi_card("Current Value", current_val, "", color)}</div>')
+
+    # ── By Doctor ──
+    if doc_rows:
+        html.append(_section("👨‍⚕️ By Doctor"))
+        # find max for bar scaling
+        try:
+            max_val = max(float(v.replace("%","")) for _, v in doc_rows)
+        except:
+            max_val = 100
+        for name, val in doc_rows:
+            try:
+                num = float(val.replace("%",""))
+                bar_w = (num / max_val * 100) if max_val else 50
+            except:
+                bar_w = 50
+            color = _pct_color(kpi_name, val)
+            bar_color = {"green":"#2E6B3E","orange":"#8B5A00","red":"#8B1A1A"}.get(color,"#C9A84C")
+            html.append(f"""
+            <div class="doctor-row">
+              <div class="doctor-name" style="min-width:110px">Dr. {name}</div>
+              <div class="ach-bar-wrap"><div class="ach-bar" style="width:{bar_w:.0f}%;background:{bar_color}"></div></div>
+              <div class="ach-pct" style="color:{bar_color}">{val}</div>
+            </div>""")
+
+    # ── By BU ──
+    if bu_rows:
+        html.append(_section("🏥 By Business Unit"))
+        bu_cards = []
+        for bu_name, val in bu_rows:
+            color = _pct_color(kpi_name, val)
+            bu_cards.append(_kpi_card(bu_name, val, "", color))
+        html.append(f'<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(100px,1fr))">{"".join(bu_cards)}</div>')
+
+    # ── Knowledge Base ──
+    if kb_lines:
+        html.append(_section("📚 Knowledge Base Insights"))
+        # Parse pipe-separated KB records into readable bullets
+        full_kb = " ".join(kb_lines)
+        # Extract key fields from KB records
+        insights = []
+        records = re.split(r'\[adx_kpi', full_kb)
+        for rec in records[:4]:  # max 4 records shown
+            if not rec.strip(): continue
+            # Pull out useful fields
+            fields = {}
+            for field in ["KPI_Name","Business_Question","Primary_Driver_KPI",
+                          "Secondary_Driver_KPI","Investigation_Step_1","Investigation_Step_2",
+                          "Recommended_Action","Escalation_Level"]:
+                m = re.search(rf'{field}:\s*([^|]+)', rec)
+                if m: fields[field] = m.group(1).strip()
+
+            if fields:
+                card_html = ['<div style="background:#FBF5E6;border:1px solid #E0C97A;border-radius:10px;padding:12px 14px;margin-bottom:8px">']
+                if "Business_Question" in fields:
+                    card_html.append(f'<div style="font-size:13px;font-weight:600;color:#5C3A1E;margin-bottom:8px">❓ {fields["Business_Question"]}</div>')
+                if "Primary_Driver_KPI" in fields:
+                    card_html.append(f'<div style="font-size:12px;color:#8B6D3E;margin-bottom:4px">🎯 Primary Driver: <b>{fields["Primary_Driver_KPI"]}</b></div>')
+                if "Secondary_Driver_KPI" in fields:
+                    card_html.append(f'<div style="font-size:12px;color:#8B6D3E;margin-bottom:8px">🔗 Secondary Driver: <b>{fields["Secondary_Driver_KPI"]}</b></div>')
+                # Investigation steps
+                steps = [fields.get(f"Investigation_Step_{i}","") for i in range(1,5) if fields.get(f"Investigation_Step_{i}")]
+                if steps:
+                    card_html.append('<div style="font-size:12px;color:#5C3A1E;margin-bottom:6px"><b>🔎 Investigation Steps:</b></div>')
+                    for i, s in enumerate(steps, 1):
+                        card_html.append(f'<div style="font-size:12px;color:#5C3A1E;padding:2px 0 2px 12px">Step {i}: {s}</div>')
+                if "Recommended_Action" in fields:
+                    card_html.append(f'<div style="font-size:12px;background:#E8F4ED;color:#1A5C2A;border-radius:6px;padding:6px 10px;margin-top:8px">✅ Action: {fields["Recommended_Action"]}</div>')
+                if "Escalation_Level" in fields:
+                    card_html.append(f'<div style="font-size:11px;color:#8B6D3E;margin-top:6px">📊 Escalation: {fields["Escalation_Level"]}</div>')
+                card_html.append('</div>')
+                insights.append("".join(card_html))
+
+        if insights:
+            html.append("".join(insights))
+        else:
+            # Fallback: show truncated raw text
+            short = full_kb[:600].rsplit("|", 1)[0] + "..."
+            html.append(f'<div style="font-size:13px;color:#8B6D3E;line-height:1.7;background:#FBF5E6;padding:10px;border-radius:8px">{short}</div>')
+
     return "".join(html)
 
 
