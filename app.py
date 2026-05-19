@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════════════
-# CUSTOM CSS — Chat UI
+# CUSTOM CSS — PROFESSIONAL UI (DESIGN ONLY)
 # ══════════════════════════════════════════════════════
 st.markdown("""
 <style>
@@ -22,159 +22,221 @@ st.markdown("""
   #MainMenu, footer, header { visibility: hidden; }
   .block-container { padding: 0 !important; max-width: 100% !important; }
 
-  /* App container */
-  .chat-wrapper {
-    max-width: 820px;
-    margin: 0 auto;
-    padding: 0 16px 100px 16px;
-    font-family: 'Segoe UI', sans-serif;
+  /* Global typography */
+  body, .stApp {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #F6F9FC;
   }
 
-  /* Header */
+  /* Main chat container */
+  .chat-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 100px 20px;
+  }
+
+  /* Header - modern glass effect */
   .chat-header {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: #185FA5;
+    background: linear-gradient(135deg, #0F3B6A 0%, #185FA5 100%);
+    backdrop-filter: blur(2px);
     color: white;
-    padding: 14px 24px;
+    padding: 16px 28px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    border-radius: 0 0 16px 16px;
-    box-shadow: 0 2px 12px rgba(24,95,165,0.3);
+    gap: 16px;
+    margin-bottom: 24px;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.2);
   }
   .chat-header h1 {
     margin: 0;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
+    letter-spacing: -0.2px;
     color: white;
   }
   .chat-header p {
     margin: 0;
-    font-size: 12px;
-    opacity: 0.8;
+    font-size: 13px;
+    opacity: 0.85;
   }
   .bu-badge {
-    background: rgba(255,255,255,0.2);
-    padding: 3px 10px;
-    border-radius: 20px;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(4px);
+    padding: 5px 12px;
+    border-radius: 40px;
     font-size: 12px;
-    margin-left: 4px;
+    font-weight: 500;
+    margin-left: 6px;
+    border: 1px solid rgba(255,255,255,0.2);
   }
 
-  /* User message */
+  /* User message - crisp bubble */
   .msg-user {
     display: flex;
     justify-content: flex-end;
-    margin: 10px 0;
+    margin: 16px 0;
   }
   .msg-user .bubble {
     background: #185FA5;
     color: white;
-    padding: 10px 16px;
-    border-radius: 18px 18px 4px 18px;
+    padding: 10px 18px;
+    border-radius: 22px 22px 6px 22px;
     max-width: 70%;
     font-size: 15px;
     line-height: 1.5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    font-weight: 450;
   }
 
-  /* Assistant message */
+  /* Assistant message - clean, elevated */
   .msg-bot {
     display: flex;
-    gap: 10px;
-    margin: 10px 0;
+    gap: 12px;
+    margin: 20px 0;
     align-items: flex-start;
   }
   .bot-avatar {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: #E6F1FB;
+    background: linear-gradient(135deg, #EFF6FF, #E1EEFA);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 18px;
     flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    border: 1px solid rgba(24,95,165,0.15);
   }
   .msg-bot .bubble {
-    background: #F5F7FA;
-    border: 1px solid #E8ECF0;
-    padding: 14px 18px;
-    border-radius: 4px 18px 18px 18px;
+    background: #FFFFFF;
+    border: 1px solid #E6EDF4;
+    padding: 16px 22px;
+    border-radius: 6px 22px 22px 22px;
     max-width: 85%;
     font-size: 15px;
-    line-height: 1.7;
-    color: #1a1a2e;
+    line-height: 1.65;
+    color: #1E2A3E;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    transition: box-shadow 0.2s;
+  }
+  .msg-bot .bubble:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
   }
 
-  /* KPI cards inside bot message */
+  /* KPI cards inside bot message - modern dashboard style */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin: 12px 0;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 16px 0 8px;
   }
   .kpi-card {
-    background: white;
-    border: 1px solid #E8ECF0;
-    border-radius: 10px;
-    padding: 10px 14px;
+    background: #FBFDFF;
+    border: 1px solid #E2EAF2;
+    border-radius: 16px;
+    padding: 12px 14px;
+    transition: all 0.2s;
+  }
+  .kpi-card:hover {
+    border-color: #BED3EA;
+    background: #FFFFFF;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.04);
   }
   .kpi-label {
     font-size: 12px;
-    color: #888;
-    margin-bottom: 2px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #5E7A93;
+    margin-bottom: 6px;
   }
   .kpi-value {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 700;
     color: #185FA5;
+    line-height: 1.2;
   }
-  .kpi-value.green  { color: #0F6E56; }
-  .kpi-value.red    { color: #A32D2D; }
-  .kpi-value.orange { color: #BA7517; }
+  .kpi-value.green  { color: #107C4E; }
+  .kpi-value.red    { color: #C7423F; }
+  .kpi-value.orange { color: #C45C1A; }
 
   /* Thinking indicator */
   .thinking {
     display: flex;
-    gap: 10px;
-    margin: 10px 0;
+    gap: 12px;
+    margin: 16px 0;
     align-items: center;
   }
   .thinking .bubble {
-    background: #F5F7FA;
-    border: 1px solid #E8ECF0;
-    padding: 10px 16px;
-    border-radius: 4px 18px 18px 18px;
+    background: #F0F4F9;
+    border: 1px solid #E2EAF2;
+    padding: 10px 18px;
+    border-radius: 6px 22px 22px 22px;
     font-size: 14px;
-    color: #888;
+    color: #5E7A93;
+    font-style: italic;
   }
 
   /* Suggested questions */
   .suggestions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin: 16px 0 8px 42px;
+    gap: 10px;
+    margin: 20px 0 12px 48px;
+  }
+  .suggestions button {
+    background: white;
+    border: 1px solid #CFDFEB;
+    border-radius: 40px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #185FA5;
+    transition: all 0.2s;
+  }
+  .suggestions button:hover {
+    background: #EFF6FF;
+    border-color: #185FA5;
+    transform: translateY(-1px);
   }
 
-  /* Welcome */
+  /* Welcome box */
   .welcome-box {
     text-align: center;
-    padding: 40px 20px 20px;
-    color: #555;
+    padding: 48px 24px 32px;
+    background: white;
+    border-radius: 32px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.03);
+    border: 1px solid #E6EDF4;
+    margin: 16px 0;
   }
   .welcome-box h2 {
-    color: #185FA5;
-    font-size: 22px;
-    margin-bottom: 8px;
+    color: #0F3B6A;
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 12px;
   }
   .welcome-box p {
-    font-size: 15px;
-    color: #888;
-    margin-bottom: 24px;
+    font-size: 16px;
+    color: #617B9B;
+    margin-bottom: 28px;
+  }
+
+  /* Tables / ranking formatting (preserve readability) */
+  .msg-bot .bubble table, .msg-bot .bubble pre {
+    background: #F8F9FC;
+    border-radius: 12px;
+    padding: 8px;
+  }
+  hr {
+    margin: 12px 0;
+    border-color: #E6EDF4;
   }
 </style>
 """, unsafe_allow_html=True)
@@ -187,7 +249,7 @@ GITHUB_BASE_URL = "https://models.inference.ai.azure.com"
 GITHUB_MODEL    = "gpt-4o"
 
 # ══════════════════════════════════════════════════════
-# LOAD DATA  (cached)
+# LOAD DATA  (cached) — unchanged
 # ══════════════════════════════════════════════════════
 @st.cache_resource(show_spinner="Loading data...")
 def load_data():
@@ -221,7 +283,7 @@ def load_data():
 DATA = load_data()
 
 # ══════════════════════════════════════════════════════
-# HELPERS + TOOLS  (same as before)
+# HELPERS + TOOLS  (same as before — untouched)
 # ══════════════════════════════════════════════════════
 METRIC_ALIASES = {
     "revenue":"Total Revenue","total revenue":"Total Revenue",
@@ -514,7 +576,7 @@ CRITICAL RULES:
 7. Do not call more than 3 tools per request."""
 
 # ══════════════════════════════════════════════════════
-# AGENT CALL
+# AGENT CALL — unchanged
 # ══════════════════════════════════════════════════════
 def call_github(messages: list) -> dict:
     headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Content-Type": "application/json"}
@@ -583,20 +645,20 @@ def run_agent(user_query: str, chat_history: list) -> str:
     return "Reached max steps."
 
 # ══════════════════════════════════════════════════════
-# STREAMLIT UI
+# STREAMLIT UI (unchanged logic, only CSS/header style)
 # ══════════════════════════════════════════════════════
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Header
+# Header - same HTML structure but using updated CSS classes
 st.markdown("""
 <div class="chat-header">
   <div style="font-size:28px">📊</div>
   <div>
     <h1>Andalusia OPD Analytics</h1>
-    <p>AI-powered KPI Assistant</p>
+    <p>AI-powered KPI Assistant | Real‑time insights</p>
   </div>
   <div style="margin-left:auto">
     <span class="bu-badge">ASH</span>
@@ -613,7 +675,7 @@ if not st.session_state.messages:
     st.markdown("""
     <div class="welcome-box">
       <h2>Welcome to OPD Analytics 👋</h2>
-      <p>Ask me anything about doctors, revenue, KPIs, or performance trends.</p>
+      <p>Ask me about doctor performance, revenue trends, KPIs, or benchmarking.</p>
     </div>
     """, unsafe_allow_html=True)
 
